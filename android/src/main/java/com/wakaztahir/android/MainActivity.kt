@@ -11,6 +11,8 @@ import com.wakaztahir.drivesync.drive.DriveServiceProvider
 import com.wakaztahir.drivesync.model.SyncFile
 
 class MainActivity : ComponentActivity() {
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -23,6 +25,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 LaunchedEffect(null){
+                    authProvider.launchSignIn {
+
+                    }
         //            syncProvider.startSync()
         //            val entity = ItemEntity()
         //            myItems.forEach {

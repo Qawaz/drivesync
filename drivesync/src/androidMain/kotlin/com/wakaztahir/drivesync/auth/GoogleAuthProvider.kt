@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -28,6 +29,10 @@ actual class GoogleAuthProvider(
         get() {
             return GoogleSignIn.getLastSignedInAccount(activity)
         }
+    internal var launcher : ActivityResultLauncher<Intent>? = null
+    internal var userListener : (GoogleUser?)->Unit = {
+
+    }
 
     // Initialization
     init {
@@ -38,6 +43,18 @@ actual class GoogleAuthProvider(
             .build()
 
         googleSignInClient = GoogleSignIn.getClient(activity, gso)
+        if(activity is ComponentActivity){
+            with(activity) {
+                launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                    if (it.data == null) {
+                        onFailure(Throwable("Activity Result Data is null"))
+                        userListener(null)
+                    } else {
+                        userListener(extractUserFromIntent(it.data!!))
+                    }
+                }
+            }
+        }
     }
 
     // Actual Functions
@@ -50,19 +67,9 @@ actual class GoogleAuthProvider(
     }
 
     actual suspend fun launchSignIn(user: (GoogleUser?) -> Unit) {
-        if (activity is ComponentActivity) {
-            with(activity) {
-                val launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                    if (it.data == null) {
-                        onFailure(Throwable("Activity Result Data is null"))
-                        user(null)
-                    } else {
-                        user(extractUserFromIntent(it.data!!))
-                    }
-                }
-
-                launcher.launch(googleSignInClient.signInIntent)
-            }
+        userListener = user
+        if (launcher != null) {
+            launcher?.launch(googleSignInClient.signInIntent)
         } else {
             activity.startActivityForResult(googleSignInClient.signInIntent, 289)
         }
