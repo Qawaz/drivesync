@@ -1,6 +1,7 @@
 package com.wakaztahir.drivesync.drive
 
 import android.content.Context
+import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.ByteArrayContent
 import com.google.api.client.http.InputStreamContent
@@ -18,7 +19,6 @@ import java.util.*
 actual open class DriveServiceProvider(
     appName: String,
     context: Context,
-    authProvider: GoogleAuthProvider,
     scopes: List<String> = listOf(DriveScopes.DRIVE_APPDATA),
     val onFailure: (Throwable) -> Unit = { it.printStackTrace() }
 ) : SyncServiceProvider {
@@ -28,10 +28,11 @@ actual open class DriveServiceProvider(
     init {
         val credential: GoogleAccountCredential =
             GoogleAccountCredential.usingOAuth2(context.applicationContext, scopes)
-        if (authProvider.googleSignInAccount == null) {
+        val googleSignInAccount = GoogleSignIn.getLastSignedInAccount(context)
+        if (googleSignInAccount == null) {
             onFailure(Throwable(message = "Google sign in account not found , sign in with auth provider before making an instance of service provider"))
         }
-        credential.selectedAccount = authProvider.googleSignInAccount?.account
+        credential.selectedAccount = googleSignInAccount?.account
         driveService = Drive.Builder(
             com.google.api.client.http.javanet.NetHttpTransport(),
             GsonFactory(),
