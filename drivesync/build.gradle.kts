@@ -25,7 +25,7 @@ android {
 
 kotlin {
     android {
-        publishLibraryVariants("release")
+        publishLibraryVariants("release","debug")
     }
     jvm("desktop") {
         compilations.all {
