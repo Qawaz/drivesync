@@ -59,7 +59,7 @@ class SyncProvider(
             if (!contains) {
                 localDelete()
             } else if (syncFile != null) {
-                val cloudModifiedTime = syncFile.syncFileModifiedTime ?: return
+                val cloudModifiedTime = syncFile.modifiedTime ?: return
                 if (!getIsDeleted(item)) {
                     if (modifiedTime > cloudModifiedTime) {
                         updateInCloud(syncFile)
@@ -67,7 +67,7 @@ class SyncProvider(
                         updateLocally(syncFile)
                     }
                 } else {
-                    if (syncFile.syncFileCloudId != null && provider.deleteFile(syncFile.syncFileCloudId!!)) {
+                    if (syncFile.cloudId != null && provider.deleteFile(syncFile.cloudId!!)) {
                         localDelete()
                     }
                 }
@@ -132,7 +132,7 @@ class SyncProvider(
             downloadAndInsert(syncFile)
 
             progress = (totalSize - filesMap!!.size.toFloat()) / totalSize
-            info("Synced ${syncFile.syncFileType} Item with UUID ${syncFile.syncFileUUID}")
+            info("Synced ${syncFile.type} Item with UUID ${syncFile.uuid}")
         }
         filesMap!!.clear()
     }
@@ -153,16 +153,16 @@ class SyncProvider(
         checkCloudId: Boolean = false,
     ): Boolean {
 
-        if (checkUUID && syncFileUUID == null) {
-            error("Entity ${syncFileType}'s uuid is null")
+        if (checkUUID && uuid == null) {
+            error("Entity ${type}'s uuid is null")
             return false
         }
-        if (checkEntityType && syncFileType == null) {
-            error("Entity with uuid : $syncFileUUID has null entity type")
+        if (checkEntityType && type == null) {
+            error("Entity with uuid : $uuid has null entity type")
             return false
         }
-        if (checkCloudId && syncFileCloudId == null) {
-            error("Entity $syncFileType with uuid : $syncFileUUID has null cloudId")
+        if (checkCloudId && cloudId == null) {
+            error("Entity $type with uuid : $uuid has null cloudId")
             return false
         }
         return true

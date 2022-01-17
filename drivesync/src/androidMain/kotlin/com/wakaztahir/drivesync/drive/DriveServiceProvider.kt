@@ -10,8 +10,6 @@ import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
 import com.wakaztahir.drivesync.core.SyncServiceProvider
 import com.wakaztahir.drivesync.model.SyncFile
-import com.wakaztahir.drivesync.model.syncFileUUID
-import com.wakaztahir.drivesync.auth.GoogleAuthProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -42,9 +40,11 @@ actual open class DriveServiceProvider(
 
     actual override suspend fun getSyncFile(fileId: String): SyncFile? = withContext(Dispatchers.IO) {
         val file = kotlin.runCatching {
-            driveService.files().get(fileId)
-                .setFields("id,name,description,mimeType,createdTime,modifiedTime,properties")
-                .execute()
+            SyncFile(
+                driveService.files().get(fileId)
+                    .setFields("id,name,description,mimeType,createdTime,modifiedTime,properties")
+                    .execute()
+            )
         }.onFailure(onFailure).getOrNull()
         return@withContext file
     }
@@ -56,8 +56,9 @@ actual open class DriveServiceProvider(
                 .execute()
             val filesMap = hashMapOf<String, SyncFile>()
             filesList.files.forEach {
-                if (!it.syncFileUUID.isNullOrEmpty()) {
-                    filesMap[it.syncFileUUID!!] = it
+                val uuid = it.properties["uuid"]
+                if (!uuid.isNullOrEmpty()) {
+                    filesMap[uuid] = SyncFile(it)
                 }
             }
             return@withContext filesMap
@@ -69,10 +70,10 @@ actual open class DriveServiceProvider(
             if (file.mimeType == null) onFailure(Throwable("File mimetype cannot be null"))
             val uploadedFile = kotlin.runCatching {
                 val contentStream = ByteArrayContent.fromString(file.mimeType, content)
-                if (file.id == null) {
-                    driveService.files().create(file, contentStream).execute()
+                if (file.cloudId == null) {
+                    SyncFile(driveService.files().create(file.file, contentStream).execute())
                 } else {
-                    driveService.files().update(file.id, file, contentStream).execute()
+                    SyncFile(driveService.files().update(file.cloudId, file.file, contentStream).execute())
                 }
             }.getOrNull()
             if (uploadedFile != null) {
@@ -86,10 +87,10 @@ actual open class DriveServiceProvider(
             val uploadedFile = kotlin.runCatching {
                 if (file.mimeType == null) onFailure(Throwable("File mimetype cannot be null"))
                 val contentStream = InputStreamContent(file.mimeType, content.inputStream())
-                if (file.id == null) {
-                    driveService.files().create(file, contentStream).execute()
+                if (file.cloudId == null) {
+                    SyncFile(driveService.files().create(file.file, contentStream).execute())
                 } else {
-                    driveService.files().update(file.id, file, contentStream).execute()
+                    SyncFile(driveService.files().update(file.cloudId, file.file, contentStream).execute())
                 }
             }.onFailure(action = onFailure).getOrNull()
             if (uploadedFile != null) {

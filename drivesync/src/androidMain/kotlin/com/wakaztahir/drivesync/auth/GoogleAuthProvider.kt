@@ -43,7 +43,7 @@ actual class GoogleAuthProvider(
     // Actual Functions
     actual suspend fun silentSignIn() = suspendCoroutine<GoogleUser?> { continuation ->
         googleSignInClient.silentSignIn().addOnSuccessListener {
-            continuation.resume(it)
+            continuation.resume(GoogleUser(it))
         }.addOnFailureListener {
             continuation.resume(null)
         }
@@ -88,6 +88,6 @@ actual class GoogleAuthProvider(
     // Helper Methods
     fun extractUserFromIntent(intent: Intent): GoogleUser? {
         val task: Task<GoogleSignInAccount> = GoogleSignIn.getSignedInAccountFromIntent(intent)
-        return kotlin.runCatching { task.result }.onFailure(onFailure).getOrNull()
+        return kotlin.runCatching { GoogleUser(task.result) }.onFailure(onFailure).getOrNull()
     }
 }

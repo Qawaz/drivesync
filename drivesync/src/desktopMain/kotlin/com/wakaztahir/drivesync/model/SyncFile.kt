@@ -3,7 +3,55 @@ package com.wakaztahir.drivesync.model
 import com.google.api.client.util.DateTime
 import com.google.api.services.drive.model.File
 
-actual typealias SyncFile = File
+actual class SyncFile internal constructor(internal val file : File) {
+    actual var name: String?
+        get() = file.name
+        set(value) {
+            file.name = value
+        }
+    actual var description: String?
+        get() = file.description
+        set(value) {
+            file.description = value
+        }
+    actual var type: String?
+        get() = file.properties["type"]
+        set(value) {
+            file.properties["type"] = value
+        }
+    actual var mimeType: String?
+        get() = file.mimeType
+        set(value) {
+            file.mimeType = value
+        }
+    actual var uuid: String?
+        get() = file.properties["uuid"]
+        set(value) {
+            file.properties["uuid"] = value
+        }
+    actual var cloudId: String?
+        get() = file.id
+        set(value) {
+            file.id = value
+        }
+    actual var createdTime: Long?
+        get() = if (file.createdTime != null && file.createdTime.value > 100) file.createdTime.value else file.properties["createdTime"]?.toLongOrNull()
+        set(value) {
+            file.createdTime = value?.let { DateTime(it) }
+            file.properties["createdTime"] = value.toString()
+        }
+    actual var modifiedTime: Long?
+        get() = if (file.modifiedTime != null && file.modifiedTime.value > 100) file.modifiedTime.value else file.properties["modifiedTime"]?.toLongOrNull()
+        set(value) {
+            file.modifiedTime = value?.let { DateTime(it) }
+            file.properties["modifiedTime"] = value.toString()
+        }
+    actual var properties: MutableMap<String, String>?
+        get() = file.properties
+        set(value) {
+            file.properties = value
+        }
+}
 
 actual fun createNewSyncFile(
     name: String,
@@ -14,7 +62,7 @@ actual fun createNewSyncFile(
     cloudId: String?,
     modifiedTime: Long
 ): SyncFile {
-    return File().also { file ->
+    return SyncFile(File().also { file ->
         file.name = name
         file.description = description
         file.id = cloudId
@@ -25,53 +73,5 @@ actual fun createNewSyncFile(
             "uuid" to uuid,
             "modifiedTime" to modifiedTime.toString()
         )
-    }
+    })
 }
-
-actual var SyncFile.syncFileName: String?
-    get() = this.name
-    set(value) {
-        this.name = value
-    }
-actual var SyncFile.syncFileDescription: String?
-    get() = this.description
-    set(value) {
-        this.description = value
-    }
-actual var SyncFile.syncFileType: String?
-    get() = this.properties["type"]
-    set(value) {
-        this.properties["type"] = value
-    }
-actual var SyncFile.syncFileMimeType: String?
-    get() = this.mimeType
-    set(value) {
-        this.mimeType = value
-    }
-actual var SyncFile.syncFileUUID: String?
-    get() = this.properties["uuid"]
-    set(value) {
-        this.properties["uuid"] = value
-    }
-actual var SyncFile.syncFileCloudId: String?
-    get() = this.id
-    set(value) {
-        this.id = value
-    }
-actual var SyncFile.syncFileCreatedTime: Long?
-    get() = if (this.createdTime != null && this.createdTime.value > 100) this.createdTime.value else this.properties["createdTime"]?.toLongOrNull()
-    set(value) {
-        this.createdTime = value?.let { DateTime(it) }
-        this.properties["createdTime"] = value.toString()
-    }
-actual var SyncFile.syncFileModifiedTime: Long?
-    get() = if (this.modifiedTime != null && this.modifiedTime.value > 100) this.modifiedTime.value else this.properties["modifiedTime"]?.toLongOrNull()
-    set(value) {
-        this.modifiedTime = value?.let { DateTime(it) }
-        this.properties["modifiedTime"] = value.toString()
-    }
-actual var SyncFile.syncFileProperties: MutableMap<String, String>?
-    get() = this.properties
-    set(value) {
-        this.properties = value
-    }

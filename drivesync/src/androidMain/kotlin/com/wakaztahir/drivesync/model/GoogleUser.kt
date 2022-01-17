@@ -2,17 +2,17 @@ package com.wakaztahir.drivesync.model
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 
-actual typealias GoogleUser = GoogleSignInAccount
-
-actual val GoogleUser.userID: String?
-    get() = this.id
-actual val GoogleUser.userDisplayName: String?
-    get() = this.displayName
-actual val GoogleUser.userEmail: String?
-    get() = this.email
-actual val GoogleUser.userFamilyName: String?
-    get() = this.familyName
-actual val GoogleUser.userIdToken: String?
-    get() = this.idToken
-actual val GoogleUser.userGivenName: String?
-    get() = this.givenName
+actual class GoogleUser internal constructor (internal val signInAccount: GoogleSignInAccount){
+    actual val id: String?
+        get() = signInAccount.id
+    actual val displayName: String?
+        get() = signInAccount.displayName
+    actual val email: String?
+        get() = signInAccount.email
+    actual val familyName: String?
+        get() = signInAccount.familyName
+    actual val idToken: String?
+        get() = signInAccount.idToken
+    actual val givenName: String?
+        get() = signInAccount.givenName
+}

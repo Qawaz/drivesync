@@ -1,16 +1,10 @@
 package com.wakaztahir.drivesync.model
 
-actual class GoogleUser
-
-actual val GoogleUser.userID: String?
-    get() = null
-actual val GoogleUser.userDisplayName: String?
-    get() = null
-actual val GoogleUser.userEmail: String?
-    get() = null
-actual val GoogleUser.userFamilyName: String?
-    get() = null
-actual val GoogleUser.userIdToken: String?
-    get() = null
-actual val GoogleUser.userGivenName: String?
-    get() = null
+actual class GoogleUser internal constructor() {
+    actual val id: String? = null
+    actual val displayName: String? = null
+    actual val email: String? = null
+    actual val familyName: String? = null
+    actual val idToken: String? = null
+    actual val givenName: String? = null
+}

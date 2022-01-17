@@ -11,26 +11,6 @@ class ItemEntity : SyncEntity<MyItem>(),DatabaseSyncEntity<MyItem>,JsonSyncEntit
         TODO("Not yet implemented")
     }
 
-    override fun getSyncUUID(): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun getCloudID(): String? {
-        TODO("Not yet implemented")
-    }
-
-    override fun getIsDeleted(): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun getModifiedTime(): Long {
-        TODO("Not yet implemented")
-    }
-
-    override suspend fun insert(item: MyItem) {
-        TODO("Not yet implemented")
-    }
-
     override suspend fun updateItemCloudID(cloudID: String) {
         TODO("Not yet implemented")
     }
@@ -56,6 +36,22 @@ class ItemEntity : SyncEntity<MyItem>(),DatabaseSyncEntity<MyItem>,JsonSyncEntit
     }
 
     override fun convertFromJson(json: String): MyItem {
+        TODO("Not yet implemented")
+    }
+
+    override fun getSyncUUID(item: MyItem): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun getCloudID(item: MyItem): String? {
+        TODO("Not yet implemented")
+    }
+
+    override fun getIsDeleted(item: MyItem): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun getModifiedTime(item: MyItem): Long {
         TODO("Not yet implemented")
     }
 }

@@ -15,20 +15,23 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val authProvider = GoogleAuthProvider(activity = this,clientId = "fake-id")
-        val driveSyncProvider = DriveServiceProvider(appName = "DriveSyncTest",this,authProvider)
+        val driveSyncProvider = DriveServiceProvider(appName = "DriveSyncTest",this)
         val syncProvider = SyncProvider(provider = driveSyncProvider)
 
         val myItems = listOf<MyItem>(MyItem(),MyItem(),MyItem(),MyItem())
 
-        LaunchedEffect(null){
-            syncProvider.startSync()
-            syncProvider.syncEntity(ItemEntity(),myItems)
-            syncProvider.finishSync()
-        }
-
         setContent {
             MaterialTheme {
-
+                LaunchedEffect(null){
+        //            syncProvider.startSync()
+        //            val entity = ItemEntity()
+        //            myItems.forEach {
+        //                syncProvider.syncWithDatabaseAsJson(entity,entity,entity,it)
+        //            }
+        //            syncProvider.finishSync {
+        //                //todo with sync
+        //            }
+                }
             }
         }
     }
