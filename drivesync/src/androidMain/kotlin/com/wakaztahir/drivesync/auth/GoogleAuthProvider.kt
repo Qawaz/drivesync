@@ -35,12 +35,6 @@ actual class GoogleAuthProvider(
 
     }
 
-    companion object {
-        fun isSignedIn(context: Context): Boolean {
-            return GoogleSignIn.getLastSignedInAccount(context) != null
-        }
-    }
-
     // Initialization
     init {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
