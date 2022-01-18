@@ -4,7 +4,7 @@ interface DatabaseSyncEntity<T> {
     /**
      * An item has been inserted in cloud its cloud id should be updated in the database
      */
-    suspend fun updateItemCloudID(cloudID: String)
+    suspend fun updateItemCloudID(item : T,cloudID: String)
 
     /**
      * Update new item in the database

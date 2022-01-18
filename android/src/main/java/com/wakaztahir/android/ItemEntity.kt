@@ -11,10 +11,6 @@ class ItemEntity : SyncEntity<MyItem>(),DatabaseSyncEntity<MyItem>,JsonSyncEntit
         TODO("Not yet implemented")
     }
 
-    override suspend fun updateItemCloudID(cloudID: String) {
-        TODO("Not yet implemented")
-    }
-
     override suspend fun update(oldItem: MyItem?, newItem: MyItem) {
         TODO("Not yet implemented")
     }
@@ -52,6 +48,10 @@ class ItemEntity : SyncEntity<MyItem>(),DatabaseSyncEntity<MyItem>,JsonSyncEntit
     }
 
     override fun getModifiedTime(item: MyItem): Long {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun updateItemCloudID(item: MyItem, cloudID: String) {
         TODO("Not yet implemented")
     }
 }

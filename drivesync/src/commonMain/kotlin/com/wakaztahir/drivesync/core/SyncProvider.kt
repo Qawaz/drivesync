@@ -1,6 +1,6 @@
 package com.wakaztahir.drivesync.core
 
-import com.wakaztahir.drivesync.model.*
+import com.wakaztahir.drivesync.model.SyncFile
 
 class SyncProvider(
     val provider: SyncServiceProvider,
@@ -109,10 +109,13 @@ class SyncProvider(
                 )
             },
             insertInCloud = {
-                provider.uploadStringFile(
+                val file = provider.uploadStringFile(
                     entity.onCreateSyncFile(item, mimeType = "application/json"),
                     jsonSyncEntity.convertToJson(item)
                 )
+                if (file?.cloudId != null) {
+                    dbSyncEntity.updateItemCloudID(item, file.cloudId!!)
+                }
             }
         )
     }
