@@ -21,7 +21,7 @@ import kotlin.coroutines.suspendCoroutine
 actual class GoogleAuthProvider(
     private val activity: Activity,
     clientId: String,
-    val onFailure: (Throwable) -> Unit = { Log.e("TL_AuthProvider","Error in Auth Provider",it) }
+    val onFailure: (Throwable) -> Unit = { Log.e("TL_AuthProvider", "Error in Auth Provider", it) }
 ) {
 
     // Internal Variables
@@ -30,9 +30,15 @@ actual class GoogleAuthProvider(
         get() {
             return GoogleSignIn.getLastSignedInAccount(activity)
         }
-    internal var launcher : ActivityResultLauncher<Intent>? = null
-    internal var userListener : (GoogleUser?)->Unit = {
+    internal var launcher: ActivityResultLauncher<Intent>? = null
+    internal var userListener: (GoogleUser?) -> Unit = {
 
+    }
+
+    companion object {
+        fun isSignedIn(context: Context): Boolean {
+            return GoogleSignIn.getLastSignedInAccount(context) != null
+        }
     }
 
     // Initialization
@@ -44,7 +50,7 @@ actual class GoogleAuthProvider(
             .build()
 
         googleSignInClient = GoogleSignIn.getClient(activity, gso)
-        if(activity is ComponentActivity){
+        if (activity is ComponentActivity) {
             with(activity) {
                 launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                     if (it.data == null) {
@@ -60,7 +66,7 @@ actual class GoogleAuthProvider(
 
     // Actual Functions
 
-    actual fun isSignedIn() : Boolean {
+    actual fun isSignedIn(): Boolean {
         return googleSignInAccount != null
     }
 
@@ -107,6 +113,6 @@ actual class GoogleAuthProvider(
 
 fun createGoogleAuthProvider(
     activity: Activity,
-    clientId : String,
+    clientId: String,
     onFailure: (Throwable) -> Unit = { it.printStackTrace() }
-) : GoogleAuthProvider = GoogleAuthProvider(activity,clientId,onFailure)
+): GoogleAuthProvider = GoogleAuthProvider(activity, clientId, onFailure)
