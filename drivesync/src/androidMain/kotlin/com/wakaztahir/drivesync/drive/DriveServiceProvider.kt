@@ -1,6 +1,7 @@
 package com.wakaztahir.drivesync.drive
 
 import android.content.Context
+import android.util.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.ByteArrayContent
@@ -19,7 +20,7 @@ actual open class DriveServiceProvider(
     appName: String,
     context: Context,
     scopes: List<String> = listOf(DriveScopes.DRIVE_APPDATA),
-    val onFailure: (Throwable) -> Unit = { it.printStackTrace() }
+    val onFailure: (Throwable) -> Unit = { Log.e("TL_DriveService","Error in Drive Service",it) }
 ) : SyncServiceProvider {
 
     private var driveService: Drive
