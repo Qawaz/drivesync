@@ -58,3 +58,5 @@ abstract class SyncEntity<T> {
         )
     }
 }
+
+abstract class DatabaseJsonSyncEntity<T> : SyncEntity<T>(),JsonSyncEntity<T>,DatabaseSyncEntity<T>

@@ -11,11 +11,11 @@ class ItemEntity : SyncEntity<MyItem>(),DatabaseSyncEntity<MyItem>,JsonSyncEntit
         TODO("Not yet implemented")
     }
 
-    override suspend fun update(oldItem: MyItem?, newItem: MyItem) {
+    override suspend fun updateInDB(oldItem: MyItem?, newItem: MyItem) {
         TODO("Not yet implemented")
     }
 
-    override suspend fun delete(item: MyItem) {
+    override suspend fun deleteInDB(item: MyItem) {
         TODO("Not yet implemented")
     }
 
@@ -51,7 +51,7 @@ class ItemEntity : SyncEntity<MyItem>(),DatabaseSyncEntity<MyItem>,JsonSyncEntit
         TODO("Not yet implemented")
     }
 
-    override suspend fun updateItemCloudID(item: MyItem, cloudID: String) {
+    override suspend fun updateItemCloudIDInDB(item: MyItem, cloudID: String) {
         TODO("Not yet implemented")
     }
 }

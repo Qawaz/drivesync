@@ -84,20 +84,18 @@ class SyncProvider(
 
     @Throws(NullPointerException::class)
     suspend fun <T> syncWithDatabaseAsJson(
-        entity: SyncEntity<T>,
-        dbSyncEntity: DatabaseSyncEntity<T>,
-        jsonSyncEntity: JsonSyncEntity<T>,
+        entity: DatabaseJsonSyncEntity<T>,
         item: T,
     ) {
         entity.filter(
             item,
             localDelete = {
-                dbSyncEntity.delete(item)
+                entity.deleteInDB(item)
             },
             updateLocally = {
                 val file = provider.downloadStringFile(entity.getCloudID(item)!!)
                 if (file != null) {
-                    dbSyncEntity.update(oldItem = item, newItem = jsonSyncEntity.convertFromJson(file))
+                    entity.updateInDB(oldItem = item, newItem = entity.convertFromJson(file))
                 } else {
                     error("Sync File ${entity.getSyncUUID(item)} with type key ${entity.getTypeKey()} does not exist in cloud")
                 }
@@ -105,22 +103,24 @@ class SyncProvider(
             updateInCloud = {
                 provider.uploadStringFile(
                     file = entity.onCreateSyncFile(item, mimeType = "application/json"),
-                    content = jsonSyncEntity.convertToJson(item)
+                    content = entity.convertToJson(item)
                 )
             },
             insertInCloud = {
                 val file = provider.uploadStringFile(
                     entity.onCreateSyncFile(item, mimeType = "application/json"),
-                    jsonSyncEntity.convertToJson(item)
+                    entity.convertToJson(item)
                 )
                 if (file?.cloudId != null) {
-                    dbSyncEntity.updateItemCloudID(item, file.cloudId!!)
+                    entity.updateItemCloudIDInDB(item, file.cloudId!!)
                 }
             }
         )
     }
 
-    suspend fun finishSync(downloadAndInsert: suspend (SyncFile) -> Unit) {
+    suspend fun finishDatabaseJsonSync(
+        downloadAndInsertInDB : suspend (SyncFile)->Unit,
+    ) {
         if (filesMap == null) return
 
         filesMap!!.forEach { (key, syncFile) ->
@@ -132,7 +132,7 @@ class SyncProvider(
                 )
             ) return
 
-            downloadAndInsert(syncFile)
+            downloadAndInsertInDB(syncFile)
 
             progress = (totalSize - filesMap!!.size.toFloat()) / totalSize
             info("Synced ${syncFile.type} Item with UUID ${syncFile.uuid}")
