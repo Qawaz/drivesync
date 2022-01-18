@@ -7,7 +7,7 @@ class SyncProvider(
     private val onProgress: (MessageType, String, Float) -> Unit = { messageType, message, progress -> },
 ) {
 
-    var filesMap: MutableMap<String, SyncFile>? = null
+    var filesMap: HashMap<String, SyncFile>? = null
 
     private var progress = 0f
     private var totalSize = 0
@@ -19,7 +19,7 @@ class SyncProvider(
     }
 
     // Start Sync
-    suspend fun startSync() = runCatching {
+    suspend fun startDatabaseJsonSync() = runCatching {
         filesMap = provider.getFilesMap() ?: return@runCatching
         filesMap!!.size.let { totalSize = it }
     }
@@ -118,11 +118,12 @@ class SyncProvider(
         )
     }
 
-    suspend fun finishDatabaseJsonSync(
-        downloadAndInsertInDB : suspend (SyncFile)->Unit,
-    ) {
+    suspend fun finishDatabaseJsonSync(vararg entities: DatabaseJsonSyncEntity<*>) {
         if (filesMap == null) return
-
+        val entityMap: HashMap<String, DatabaseJsonSyncEntity<*>> = hashMapOf()
+        entities.forEach {
+            entityMap[it.getTypeKey()] = it
+        }
         filesMap!!.forEach { (key, syncFile) ->
             // Validating Sync File
             if (!syncFile.isPassingErrorChecks(
@@ -132,7 +133,14 @@ class SyncProvider(
                 )
             ) return
 
-            downloadAndInsertInDB(syncFile)
+            val entity = entityMap[syncFile.type!!]
+
+            if (entity != null) {
+                val json = syncFile.cloudId?.let { provider.downloadStringFile(it) }
+                if (json != null) {
+                    entity.convertFromJsonAndInsertIntoDB(syncFile, json)
+                }
+            }
 
             progress = (totalSize - filesMap!!.size.toFloat()) / totalSize
             info("Synced ${syncFile.type} Item with UUID ${syncFile.uuid}")

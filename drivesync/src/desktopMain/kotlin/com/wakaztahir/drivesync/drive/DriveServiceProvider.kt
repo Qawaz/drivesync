@@ -46,7 +46,7 @@ actual open class DriveServiceProvider(
         return@withContext file
     }
 
-    actual override suspend fun getFilesMap(): MutableMap<String, SyncFile>? = withContext(Dispatchers.IO) {
+    actual override suspend fun getFilesMap(): HashMap<String, SyncFile>? = withContext(Dispatchers.IO) {
         return@withContext kotlin.runCatching {
             val filesList = driveService.files().list().setSpaces("appDataFolder")
                 .setFields("files('id,name,description,mimeType,createdTime,modifiedTime,properties')")

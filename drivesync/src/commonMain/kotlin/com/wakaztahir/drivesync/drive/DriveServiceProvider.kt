@@ -10,7 +10,7 @@ expect open class DriveServiceProvider : SyncServiceProvider {
      * @param fields is a string containing name of the parameters required
      * comma separated , ex : id,name,description,mimeType,createdTime,modifiedTime,properties
      */
-    override suspend fun getFilesMap(): MutableMap<String, SyncFile>?
+    override suspend fun getFilesMap(): HashMap<String, SyncFile>?
 
 
     /**

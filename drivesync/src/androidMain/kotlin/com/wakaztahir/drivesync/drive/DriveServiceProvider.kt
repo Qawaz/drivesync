@@ -13,6 +13,7 @@ import com.wakaztahir.drivesync.model.SyncFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
+import kotlin.collections.HashMap
 
 actual open class DriveServiceProvider(
     appName: String,
@@ -49,7 +50,7 @@ actual open class DriveServiceProvider(
         return@withContext file
     }
 
-    actual override suspend fun getFilesMap(): MutableMap<String, SyncFile>? = withContext(Dispatchers.IO) {
+    actual override suspend fun getFilesMap(): HashMap<String, SyncFile>? = withContext(Dispatchers.IO) {
         return@withContext kotlin.runCatching {
             val filesList = driveService.files().list().setSpaces("appDataFolder")
                 .setFields("files('id,name,description,mimeType,createdTime,modifiedTime,properties')")

@@ -59,4 +59,8 @@ abstract class SyncEntity<T> {
     }
 }
 
-abstract class DatabaseJsonSyncEntity<T> : SyncEntity<T>(),JsonSyncEntity<T>,DatabaseSyncEntity<T>
+abstract class DatabaseJsonSyncEntity<T> : SyncEntity<T>(),JsonSyncEntity<T>,DatabaseSyncEntity<T> {
+    suspend fun convertFromJsonAndInsertIntoDB(file : SyncFile, json : String){
+        insertItemInDB(convertFromJson(json))
+    }
+}
