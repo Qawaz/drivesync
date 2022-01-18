@@ -81,7 +81,7 @@ class SyncProvider(
             onProgress(MessageType.Info, "Synced ${getTypeKey()} Item With UUID $uuid ", progress)
         }
     }
-
+    
     @Throws(NullPointerException::class)
     suspend fun <T> syncWithDatabaseAsJson(
         entity: DatabaseJsonSyncEntity<T>,

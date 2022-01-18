@@ -1,13 +1,17 @@
 package com.wakaztahir.android
 
+import com.wakaztahir.drivesync.core.DatabaseJsonSyncEntity
 import com.wakaztahir.drivesync.core.DatabaseSyncEntity
 import com.wakaztahir.drivesync.core.JsonSyncEntity
 import com.wakaztahir.drivesync.core.SyncEntity
 import com.wakaztahir.drivesync.model.SyncFile
 
-class ItemEntity : SyncEntity<MyItem>(),DatabaseSyncEntity<MyItem>,JsonSyncEntity<MyItem> {
+class ItemEntity : DatabaseJsonSyncEntity<MyItem>() {
+    override suspend fun insertItemInDB(item: MyItem) {
+        TODO("Not yet implemented")
+    }
 
-    override fun getTypeKey(): String {
+    override suspend fun updateItemCloudIDInDB(item: MyItem, cloudID: String) {
         TODO("Not yet implemented")
     }
 
@@ -35,6 +39,10 @@ class ItemEntity : SyncEntity<MyItem>(),DatabaseSyncEntity<MyItem>,JsonSyncEntit
         TODO("Not yet implemented")
     }
 
+    override fun getTypeKey(): String {
+        TODO("Not yet implemented")
+    }
+
     override fun getSyncUUID(item: MyItem): String {
         TODO("Not yet implemented")
     }
@@ -51,7 +59,4 @@ class ItemEntity : SyncEntity<MyItem>(),DatabaseSyncEntity<MyItem>,JsonSyncEntit
         TODO("Not yet implemented")
     }
 
-    override suspend fun updateItemCloudIDInDB(item: MyItem, cloudID: String) {
-        TODO("Not yet implemented")
-    }
 }

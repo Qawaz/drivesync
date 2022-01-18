@@ -15,12 +15,12 @@ abstract class SyncEntity<T> {
     /**
      * Arbitrary name
      */
-    fun getName(item : T): String? = null
+    open fun getName(item : T): String? = null
 
     /**
      * Arbitrary description
      */
-    fun getDescription(item : T): String? = null
+    open fun getDescription(item : T): String? = null
 
     /**
      * UUID of the object that should be same across multiple databases
@@ -60,7 +60,7 @@ abstract class SyncEntity<T> {
 }
 
 abstract class DatabaseJsonSyncEntity<T> : SyncEntity<T>(),JsonSyncEntity<T>,DatabaseSyncEntity<T> {
-    suspend fun convertFromJsonAndInsertIntoDB(file : SyncFile, json : String){
+    open suspend fun convertFromJsonAndInsertIntoDB(file : SyncFile, json : String){
         insertItemInDB(convertFromJson(json))
     }
 }
