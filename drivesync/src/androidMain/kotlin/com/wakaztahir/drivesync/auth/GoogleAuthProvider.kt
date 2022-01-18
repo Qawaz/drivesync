@@ -3,6 +3,7 @@ package com.wakaztahir.drivesync.auth
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,7 +21,7 @@ import kotlin.coroutines.suspendCoroutine
 actual class GoogleAuthProvider(
     private val activity: Activity,
     clientId: String,
-    val onFailure: (Throwable) -> Unit = { it.printStackTrace() }
+    val onFailure: (Throwable) -> Unit = { Log.e("TL_AuthProvider","Error in Auth Provider",it) }
 ) {
 
     // Internal Variables
@@ -58,6 +59,11 @@ actual class GoogleAuthProvider(
     }
 
     // Actual Functions
+
+    actual fun isSignedIn() : Boolean {
+        return googleSignInAccount != null
+    }
+
     actual suspend fun silentSignIn() = suspendCoroutine<GoogleUser?> { continuation ->
         googleSignInClient.silentSignIn().addOnSuccessListener {
             continuation.resume(GoogleUser(it))
@@ -98,3 +104,9 @@ actual class GoogleAuthProvider(
         return kotlin.runCatching { GoogleUser(task.result) }.onFailure(onFailure).getOrNull()
     }
 }
+
+fun createGoogleAuthProvider(
+    activity: Activity,
+    clientId : String,
+    onFailure: (Throwable) -> Unit = { it.printStackTrace() }
+) : GoogleAuthProvider = GoogleAuthProvider(activity,clientId,onFailure)
