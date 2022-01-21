@@ -123,7 +123,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
         getFilesMap()
         entities.forEachIndexed { index, entity ->
             syncSingle(entity) { progress ->
-                onProgress(progress * (index / entities.size.toFloat()))
+                onProgress(progress * (index / entities.size.toFloat()) * ((totalSize - filesMap!!.size) / totalSize))
             }
         }
         entities.forEach {
