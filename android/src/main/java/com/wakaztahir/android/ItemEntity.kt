@@ -23,10 +23,6 @@ class ItemEntity : DatabaseJsonSyncEntity<MyItem>() {
         TODO("Not yet implemented")
     }
 
-    override fun shouldBeUploaded(item: MyItem): Boolean {
-        TODO("Not yet implemented")
-    }
-
     override fun shouldBeDownloaded(item: MyItem?, syncFile: SyncFile?): Boolean {
         TODO("Not yet implemented")
     }
@@ -56,6 +52,10 @@ class ItemEntity : DatabaseJsonSyncEntity<MyItem>() {
     }
 
     override fun getModifiedTime(item: MyItem): Long {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getAllItems(): List<MyItem> {
         TODO("Not yet implemented")
     }
 
