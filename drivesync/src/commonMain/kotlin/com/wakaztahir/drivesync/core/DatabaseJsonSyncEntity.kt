@@ -42,7 +42,7 @@ interface JsonSyncEntity<T> {
      * This function is called after the filter has decided that the item is
      * either not present or has become outdated in the local space / database
      */
-    fun shouldBeDownloaded(item: T): Boolean = true
+    fun shouldBeDownloaded(item: T, syncFile: SyncFile): Boolean = true
 
     /**
      * Same as [shouldBeDownloaded] but item isn't available and only new file's metadata

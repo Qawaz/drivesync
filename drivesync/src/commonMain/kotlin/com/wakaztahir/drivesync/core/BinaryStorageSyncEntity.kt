@@ -16,7 +16,7 @@ interface BinarySyncEntity<T> {
      * This function is called after the filter has decided that the file
      * has become outdated or not present in the local storage so returning true default
      */
-    fun shouldDownloadFileFor(item: T): Boolean = true
+    fun shouldDownloadFileFor(item: T,syncFile : SyncFile): Boolean = true
 
     /**
      * Same as [shouldDownloadFileFor] but since item is not available

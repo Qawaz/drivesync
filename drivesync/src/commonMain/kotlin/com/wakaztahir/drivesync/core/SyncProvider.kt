@@ -76,7 +76,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
                     entity.deleteInDB(item)
                 },
                 updateLocally = {
-                    if (entity.shouldBeDownloaded(item)) {
+                    if (entity.shouldBeDownloaded(item,it)) {
                         val file = provider.downloadStringFile(entity.getCloudID(item)!!)
                         if (file != null) {
                             entity.updateInDB(oldItem = item, newItem = entity.convertFromJson(file))
@@ -167,7 +167,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
                     entity.deleteItemFile(item)
                 },
                 updateLocally = {
-                    if (entity.shouldDownloadFileFor(item)) {
+                    if (entity.shouldDownloadFileFor(item,it)) {
                         if (it.cloudId != null) {
                             val byteArray = provider.downloadBinaryFile(it.cloudId!!)
                             if (byteArray != null) {
