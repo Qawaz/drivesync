@@ -19,7 +19,7 @@ actual open class DriveServiceProvider(
 //    authProvider: GoogleAuthProvider,
     accessTokenValue: String,
     accessTokenExpiry: Date,
-    val onFailure: (Throwable) -> Unit = { it.printStackTrace() }
+    onFailure: (Throwable) -> Unit = { it.printStackTrace() }
 ) : SyncServiceProvider {
 
     private var driveService: Drive
@@ -35,36 +35,49 @@ actual open class DriveServiceProvider(
         ).setApplicationName(appName).build()
     }
 
-    actual override suspend fun getSyncFile(fileId: String): SyncFile? = withContext(Dispatchers.IO) {
-        val file = kotlin.runCatching {
-            SyncFile(
-                driveService.files().get(fileId)
-                    .setFields("id,name,description,mimeType,createdTime,modifiedTime,properties")
+    actual override suspend fun getSyncFile(fileId: String, onFailure: (Throwable) -> Unit): SyncFile? =
+        withContext(Dispatchers.IO) {
+            val file = kotlin.runCatching {
+                SyncFile(
+                    driveService.files().get(fileId)
+                        .setFields("id,name,description,mimeType,createdTime,modifiedTime,properties")
+                        .execute()
+                )
+            }.onFailure(onFailure).getOrNull()
+            return@withContext file
+        }
+
+    actual override suspend fun getFilesMap(onFailure: (Throwable) -> Unit): HashMap<String, SyncFile>? =
+        withContext(Dispatchers.IO) {
+            return@withContext kotlin.runCatching {
+                val filesList = driveService.files().list().setSpaces("appDataFolder")
+                    .setFields("files(id,name,description,mimeType,createdTime,modifiedTime,properties)")
                     .execute()
-            )
-        }.onFailure(onFailure).getOrNull()
-        return@withContext file
-    }
-
-    actual override suspend fun getFilesMap(): HashMap<String, SyncFile>? = withContext(Dispatchers.IO) {
-        return@withContext kotlin.runCatching {
-            val filesList = driveService.files().list().setSpaces("appDataFolder")
-                .setFields("files(id,name,description,mimeType,createdTime,modifiedTime,properties)")
-                .execute()
-            val filesMap = hashMapOf<String, SyncFile>()
-            filesList.files.forEach {
-                kotlin.runCatching {
-                    val uuid = it.properties["uuid"]
-                    if (!uuid.isNullOrEmpty()) {
-                        filesMap[uuid] = SyncFile(it)
+                val filesMap = hashMapOf<String, SyncFile>()
+                filesList.files.forEach {
+                    kotlin.runCatching {
+                        val uuid = it.properties["uuid"]
+                        if (!uuid.isNullOrEmpty()) {
+                            filesMap[uuid] = SyncFile(it)
+                        }
+                    }.onFailure {
+                        onFailure(
+                            Throwable(
+                                message = "Error during getting properties of a file",
+                                it.cause
+                            )
+                        )
                     }
-                }.onFailure { onFailure(Throwable(message = "Error during getting properties of a file", it.cause)) }
-            }
-            return@withContext filesMap
-        }.onFailure(onFailure).getOrNull()
-    }
+                }
+                return@withContext filesMap
+            }.onFailure(onFailure).getOrNull()
+        }
 
-    actual override suspend fun uploadStringFile(file: SyncFile, content: String): SyncFile? =
+    actual override suspend fun uploadStringFile(
+        file: SyncFile,
+        content: String,
+        onFailure: (Throwable) -> Unit
+    ): SyncFile? =
         withContext(Dispatchers.IO) {
             if (file.mimeType == null) onFailure(Throwable("File mimetype cannot be null"))
             val uploadedFile = kotlin.runCatching {
@@ -81,7 +94,11 @@ actual open class DriveServiceProvider(
             return@withContext null
         }
 
-    actual override suspend fun uploadBinaryFile(file: SyncFile, content: ByteArray): SyncFile? =
+    actual override suspend fun uploadBinaryFile(
+        file: SyncFile,
+        content: ByteArray,
+        onFailure: (Throwable) -> Unit
+    ): SyncFile? =
         withContext(Dispatchers.IO) {
             val uploadedFile = kotlin.runCatching {
                 if (file.mimeType == null) onFailure(Throwable("File mimetype cannot be null"))
@@ -99,29 +116,32 @@ actual open class DriveServiceProvider(
         }
 
 
-    actual override suspend fun downloadStringFile(fileId: String): String? = withContext(Dispatchers.IO) {
-        kotlin.runCatching {
-            driveService.files().get(fileId).executeMediaAsInputStream().use {
-                val s: Scanner = Scanner(it).useDelimiter("\\A")
-                val result = if (s.hasNext()) s.next() else ""
-                result
-            }
-        }.onFailure(onFailure).getOrNull()
-    }
+    actual override suspend fun downloadStringFile(fileId: String, onFailure: (Throwable) -> Unit): String? =
+        withContext(Dispatchers.IO) {
+            kotlin.runCatching {
+                driveService.files().get(fileId).executeMediaAsInputStream().use {
+                    val s: Scanner = Scanner(it).useDelimiter("\\A")
+                    val result = if (s.hasNext()) s.next() else ""
+                    result
+                }
+            }.onFailure(onFailure).getOrNull()
+        }
 
-    actual override suspend fun downloadBinaryFile(fileId: String): ByteArray? = withContext(Dispatchers.IO) {
-        kotlin.runCatching {
-            driveService.files().get(fileId).executeMediaAsInputStream().use { inputStream ->
-                inputStream.readBytes()
-            }
-        }.onFailure(onFailure).getOrNull()
-    }
+    actual override suspend fun downloadBinaryFile(fileId: String, onFailure: (Throwable) -> Unit): ByteArray? =
+        withContext(Dispatchers.IO) {
+            kotlin.runCatching {
+                driveService.files().get(fileId).executeMediaAsInputStream().use { inputStream ->
+                    inputStream.readBytes()
+                }
+            }.onFailure(onFailure).getOrNull()
+        }
 
 
-    actual override suspend fun deleteFile(fileId: String): Boolean = withContext(Dispatchers.IO) {
-        val operation = kotlin.runCatching {
-            driveService.files().delete(fileId).execute()
-        }.onFailure(onFailure)
-        return@withContext operation.isSuccess
-    }
+    actual override suspend fun deleteFile(fileId: String, onFailure: (Throwable) -> Unit): Boolean =
+        withContext(Dispatchers.IO) {
+            val operation = kotlin.runCatching {
+                driveService.files().delete(fileId).execute()
+            }.onFailure(onFailure)
+            return@withContext operation.isSuccess
+        }
 }

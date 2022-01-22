@@ -10,7 +10,7 @@ expect open class DriveServiceProvider : SyncServiceProvider {
      * @param fields is a string containing name of the parameters required
      * comma separated , ex : id,name,description,mimeType,createdTime,modifiedTime,properties
      */
-    override suspend fun getFilesMap(): HashMap<String, SyncFile>?
+    override suspend fun getFilesMap(onFailure: (Throwable) -> Unit): HashMap<String, SyncFile>?
 
 
     /**
@@ -18,33 +18,33 @@ expect open class DriveServiceProvider : SyncServiceProvider {
      * @param fields is a string containing name of the parameters required
      * comma separated , ex : id,name,webContentLink,webViewLink
      */
-    override suspend fun getSyncFile(fileId: String): SyncFile?
+    override suspend fun getSyncFile(fileId: String, onFailure: (Throwable) -> Unit): SyncFile?
 
     /**
      * Make sure to set file mimetype
      * Set the id of the drive file to null if inserting and the actual id if updating
      */
-    override suspend fun uploadStringFile(file: SyncFile, content: String): SyncFile?
+    override suspend fun uploadStringFile(file: SyncFile, content: String, onFailure: (Throwable) -> Unit): SyncFile?
 
     /**
      * Make sure to set file mimetype
      * Set the id of the drive file to null if inserting and the actual id if updating
      */
-    override suspend fun uploadBinaryFile(file: SyncFile, content: ByteArray): SyncFile?
+    override suspend fun uploadBinaryFile(file: SyncFile, content: ByteArray, onFailure: (Throwable) -> Unit): SyncFile?
 
     /**
      * Download a file fileId which contains a string
      */
-    override suspend fun downloadStringFile(fileId: String): String?
+    override suspend fun downloadStringFile(fileId: String, onFailure: (Throwable) -> Unit): String?
 
     /**
      * Download file with fileId which contains a byte array
      */
-    override suspend fun downloadBinaryFile(fileId: String): ByteArray?
+    override suspend fun downloadBinaryFile(fileId: String, onFailure: (Throwable) -> Unit): ByteArray?
 
     /**
      * Delete a file with given fileId
      */
-    override suspend fun deleteFile(fileId: String): Boolean
+    override suspend fun deleteFile(fileId: String, onFailure: (Throwable) -> Unit): Boolean
 
 }

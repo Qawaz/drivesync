@@ -15,8 +15,8 @@ class SyncProvider(val provider: SyncServiceProvider) {
 
 
     @Throws
-    private suspend fun getFilesMap() {
-        filesMap = provider.getFilesMap()
+    private suspend fun getFilesMap(onFailure : (Throwable)->Unit) {
+        filesMap = provider.getFilesMap(onFailure)
         if (filesMap != null) {
             totalSize = filesMap!!.size.toFloat()
         }
@@ -28,94 +28,113 @@ class SyncProvider(val provider: SyncServiceProvider) {
     suspend fun sync(
         vararg entities: DatabaseJsonSyncEntity<*>,
         onProgress: (Float) -> Unit,
-        onMessage: (MessageType, String) -> Unit,
-    ) {
+        onMessage: (MessageType, Throwable) -> Unit,
+    ) = kotlin.runCatching {
         val entityMap = hashMapOf<String, DatabaseJsonSyncEntity<*>>()
-        getFilesMap()
-        if (filesMap == null) {
-            onMessage(MessageType.Error, "Empty response received")
-            return
-        }
+        getFilesMap { onMessage(MessageType.Error,it) }
         entities.forEachIndexed { index, entity ->
-            syncSingle(entity) { progress ->
-                onProgress(progress * (index / entities.size.toFloat()) * ((totalSize - filesMap!!.size) / totalSize))
-            }
+            syncSingle(
+                entity,
+                onMessage = onMessage,
+                onProgress = { progress ->
+                    val cloudFilesProgress = if (totalSize != 0f) ((totalSize - filesMap!!.size) / totalSize) else 1f
+                    onProgress(progress * (index / entities.size.toFloat()) * cloudFilesProgress)
+                },
+            )
+        }
+        if (filesMap == null) {
+            onMessage(MessageType.Error, Throwable("Empty response received"))
+            return@runCatching
         }
         entities.forEach {
             entityMap[it.typeKey] = it
         }
         filesMap!!.forEach { (key, syncFile) ->
-            // Validating Sync File
-            if (!syncFile.isPassingErrorChecks(
-                    checkUUID = true,
-                    checkCloudId = true,
-                    checkEntityType = true,
-                    onError = {
-                        onMessage(MessageType.Error, it)
-                    }
-                )
-            ) return@forEach
+            kotlin.runCatching {
+                // Validating Sync File
+                if (!syncFile.isPassingErrorChecks(
+                        checkUUID = true,
+                        checkCloudId = true,
+                        checkEntityType = true,
+                        onError = {
+                            onMessage(MessageType.Error, Throwable(it))
+                        }
+                    )
+                ) return@forEach
 
-            val entity = entityMap[syncFile.type!!]
+                val entity = entityMap[syncFile.type!!]
 
-            if (entity != null) {
-                if (entity.shouldBeDownloaded(syncFile)) {
-                    val json = syncFile.cloudId?.let { provider.downloadStringFile(it) }
-                    if (json != null) {
-                        entity.convertFromJsonAndInsertIntoDB(syncFile, json)
+                if (entity != null) {
+                    if (entity.shouldBeDownloaded(syncFile)) {
+                        val json = syncFile.cloudId?.let { provider.downloadStringFile(it){ onMessage(MessageType.Warning,it) } }
+                        if (json != null) {
+                            entity.convertFromJsonAndInsertIntoDB(syncFile, json)
+                        }
                     }
                 }
+            }.onFailure {
+                onMessage(MessageType.Warning, it)
             }
-
             onProgress(totalSize - filesMap!!.size.toFloat() / totalSize)
         }
         filesMap!!.clear()
-    }
+    }.onFailure { onMessage(MessageType.Error, it) }
 
     @Throws
-    internal suspend fun <T> syncSingle(entity: DatabaseJsonSyncEntity<T>, onProgress: (Float) -> Unit) {
+    internal suspend fun <T> syncSingle(
+        entity: DatabaseJsonSyncEntity<T>,
+        onProgress: (Float) -> Unit,
+        onMessage: (MessageType, Throwable) -> Unit,
+    ) = kotlin.runCatching {
         val items = entity.getAllItems()
         items.forEachIndexed { index, item ->
-            entity.filter(
-                item,
-                localDelete = {
-                    entity.deleteInDB(item)
-                },
-                updateLocally = {
-                    if (entity.shouldBeDownloaded(item, it)) {
-                        val file = provider.downloadStringFile(entity.getCloudID(item)!!)
-                        if (file != null) {
-                            entity.updateInDB(oldItem = item, newItem = entity.convertFromJson(file))
-                        } else {
-                            error("Sync File ${entity.getSyncUUID(item)} with type key ${entity.typeKey} does not exist in cloud")
+            kotlin.runCatching {
+                entity.filter(
+                    item,
+                    localDelete = {
+                        entity.deleteInDB(item)
+                    },
+                    updateLocally = {
+                        if (entity.shouldBeDownloaded(item, it)) {
+                            val file = provider.downloadStringFile(entity.getCloudID(item)!!) { onMessage(MessageType.Warning,it) }
+                            if (file != null) {
+                                entity.updateInDB(oldItem = item, newItem = entity.convertFromJson(file))
+                            } else {
+                                onMessage(
+                                    MessageType.Warning,
+                                    Throwable("Sync File ${entity.getSyncUUID(item)} with type key ${entity.typeKey} does not exist in cloud")
+                                )
+                            }
                         }
-                    }
-                },
-                updateInCloud = { syncFile ->
-                    if (entity.shouldBeUploaded(item)) {
-                        provider.uploadStringFile(
-                            file = entity.onCreateSyncFile(item, mimeType = "application/json").also { newSyncFile ->
-                                newSyncFile.cloudId = syncFile.cloudId
-                            },
-                            content = entity.convertToJson(item)
-                        )
-                    }
-                },
-                insertInCloud = {
-                    if (entity.shouldBeUploaded(item)) {
-                        val file = provider.uploadStringFile(
-                            entity.onCreateSyncFile(item, mimeType = "application/json"),
-                            entity.convertToJson(item)
-                        )
-                        if (file?.cloudId != null) {
-                            entity.updateItemCloudIDInDB(item, file.cloudId!!)
+                    },
+                    updateInCloud = { syncFile ->
+                        if (entity.shouldBeUploaded(item)) {
+                            provider.uploadStringFile(
+                                file = entity.onCreateSyncFile(item, mimeType = "application/json")
+                                    .also { newSyncFile ->
+                                        newSyncFile.cloudId = syncFile.cloudId
+                                    },
+                                content = entity.convertToJson(item)
+                            ) { onMessage(MessageType.Warning,it) }
                         }
-                    }
-                }
-            )
+                    },
+                    insertInCloud = {
+                        if (entity.shouldBeUploaded(item)) {
+                            val file = provider.uploadStringFile(
+                                entity.onCreateSyncFile(item, mimeType = "application/json"),
+                                entity.convertToJson(item)
+                            ) { onMessage(MessageType.Warning,it) }
+                            if (file?.cloudId != null) {
+                                entity.updateItemCloudIDInDB(item, file.cloudId!!)
+                            }
+                        }
+                    },
+                    onMessage = onMessage
+                )
+            }.onFailure { onMessage(MessageType.Warning, it) }
             onProgress(index / items.size.toFloat())
         }
-    }
+    }.onFailure { onMessage(MessageType.Error, it) }
 
     //----Binary Storage Sync Entity
 
@@ -123,103 +142,120 @@ class SyncProvider(val provider: SyncServiceProvider) {
     suspend fun sync(
         vararg entities: BinaryStorageSyncEntity<*>,
         onProgress: (Float) -> Unit,
-        onMessage: (MessageType, String) -> Unit
-    ) {
+        onMessage: (MessageType, Throwable) -> Unit,
+    ) = runCatching {
         val entityMap = hashMapOf<String, BinaryStorageSyncEntity<*>>()
-        getFilesMap()
-        if (filesMap == null) {
-            onMessage(MessageType.Error, "Empty response received")
-            return
-        }
+        getFilesMap { onMessage(MessageType.Error,it) }
         entities.forEachIndexed { index, entity ->
-            syncSingle(entity) { progress ->
-                onProgress(progress * (index / entities.size.toFloat()) * ((totalSize - filesMap!!.size) / totalSize))
-            }
+            syncSingle(
+                entity,
+                onProgress = { progress ->
+                    val cloudFilesProgress = if (totalSize != 0f) ((totalSize - filesMap!!.size) / totalSize) else 1f
+                    onProgress(progress * (index / entities.size.toFloat()) * cloudFilesProgress)
+                },
+                onMessage = onMessage
+            )
         }
         entities.forEach {
             entityMap[it.typeKey] = it
         }
+        if (filesMap == null) {
+            onMessage(MessageType.Error, Throwable("Empty response received"))
+            return@runCatching
+        }
         filesMap!!.forEach { (key, syncFile) ->
-            // Validating Sync File
-            if (!syncFile.isPassingErrorChecks(
-                    checkUUID = true,
-                    checkCloudId = true,
-                    checkEntityType = true,
-                    onError = {
-                        onMessage(MessageType.Error, it)
-                    }
-                )
-            ) return@forEach
+            kotlin.runCatching {
+                // Validating Sync File
+                if (!syncFile.isPassingErrorChecks(
+                        checkUUID = true,
+                        checkCloudId = true,
+                        checkEntityType = true,
+                        onError = {
+                            onMessage(MessageType.Warning, Throwable(it))
+                        }
+                    )
+                ) return@forEach
 
-            val entity = entityMap[syncFile.type!!]
+                val entity = entityMap[syncFile.type!!]
 
-            if (entity != null) {
-                if (entity.shouldDownloadFileFor(syncFile)) {
-                    val byteArray = provider.downloadBinaryFile(syncFile.cloudId!!)
-                    if (byteArray != null) {
-                        entity.createItemFile(syncFile, byteArray)
+                if (entity != null) {
+                    if (entity.shouldDownloadFileFor(syncFile)) {
+                        val byteArray = provider.downloadBinaryFile(syncFile.cloudId!!) { onMessage(MessageType.Warning,it) }
+                        if (byteArray != null) {
+                            entity.createItemFile(syncFile, byteArray)
+                        }
                     }
                 }
+            }.onFailure {
+                onMessage(MessageType.Warning, it)
             }
-
             onProgress(totalSize - filesMap!!.size.toFloat() / totalSize)
         }
         filesMap!!.clear()
+    }.onFailure {
+        onMessage(MessageType.Error, it)
     }
 
     @Throws
-    internal suspend fun <T> syncSingle(entity: BinaryStorageSyncEntity<T>, onProgress: (Float) -> Unit) {
+    internal suspend fun <T> syncSingle(
+        entity: BinaryStorageSyncEntity<T>,
+        onProgress: (Float) -> Unit,
+        onMessage: (MessageType, Throwable) -> Unit
+    ) = kotlin.runCatching {
         val items = entity.getAllItems()
         items.forEachIndexed { index, item ->
-            entity.filter(
-                item,
-                localDelete = {
-                    entity.deleteItemFile(item)
-                },
-                updateLocally = {
-                    if (entity.shouldDownloadFileFor(item, it)) {
-                        if (it.cloudId != null) {
-                            val byteArray = provider.downloadBinaryFile(it.cloudId!!)
-                            if (byteArray != null) {
-                                entity.updateItemFile(item, it, byteArray)
+            kotlin.runCatching {
+                entity.filter(
+                    item,
+                    localDelete = {
+                        entity.deleteItemFile(item)
+                    },
+                    updateLocally = {
+                        if (entity.shouldDownloadFileFor(item, it)) {
+                            if (it.cloudId != null) {
+                                val byteArray = provider.downloadBinaryFile(it.cloudId!!) { onMessage(MessageType.Warning,it) }
+                                if (byteArray != null) {
+                                    entity.updateItemFile(item, it, byteArray)
+                                }
                             }
                         }
-                    }
-                },
-                updateInCloud = { syncFile ->
-                    if (entity.shouldUploadFileFor(item)) {
-                        val byteArray = entity.readBytes(item)
-                        if (byteArray != null) {
-                            provider.uploadBinaryFile(
-                                file = entity.onCreateSyncFile(
-                                    item = item,
-                                    mimeType = entity.getMimeType(item).ifEmpty { "application/octet-stream" }
-                                ).also { newSyncFile ->
-                                    newSyncFile.cloudId = syncFile.cloudId
-                                },
-                                content = byteArray
-                            )
+                    },
+                    updateInCloud = { syncFile ->
+                        if (entity.shouldUploadFileFor(item)) {
+                            val byteArray = entity.readBytes(item)
+                            if (byteArray != null) {
+                                provider.uploadBinaryFile(
+                                    file = entity.onCreateSyncFile(
+                                        item = item,
+                                        mimeType = entity.getMimeType(item).ifEmpty { "application/octet-stream" }
+                                    ).also { newSyncFile ->
+                                        newSyncFile.cloudId = syncFile.cloudId
+                                    },
+                                    content = byteArray
+                                ) { onMessage(MessageType.Warning,it) }
+                            }
                         }
-                    }
-                },
-                insertInCloud = {
-                    if (entity.shouldUploadFileFor(item)) {
-                        val byteArray = entity.readBytes(item)
-                        if (byteArray != null) {
-                            provider.uploadBinaryFile(
-                                file = entity.onCreateSyncFile(
-                                    item = item,
-                                    mimeType = entity.getMimeType(item).ifEmpty { "application/octet-stream" }
-                                ),
-                                content = byteArray
-                            )
+                    },
+                    insertInCloud = {
+                        if (entity.shouldUploadFileFor(item)) {
+                            val byteArray = entity.readBytes(item)
+                            if (byteArray != null) {
+                                provider.uploadBinaryFile(
+                                    file = entity.onCreateSyncFile(
+                                        item = item,
+                                        mimeType = entity.getMimeType(item).ifEmpty { "application/octet-stream" }
+                                    ),
+                                    content = byteArray
+                                ) { onMessage(MessageType.Warning,it) }
+                            }
                         }
-                    }
-                }
-            )
+                    },
+                    onMessage = onMessage
+                )
+            }.onFailure { onMessage(MessageType.Warning, it) }
             onProgress(index / items.size.toFloat())
         }
-    }
+    }.onFailure { onMessage(MessageType.Error, it) }
 
 
     //-----------------Sync Functions
@@ -241,6 +277,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
         updateLocally: suspend (SyncFile) -> Unit,
         updateInCloud: suspend (SyncFile) -> Unit,
         insertInCloud: suspend () -> Unit,
+        onMessage: (MessageType, Throwable) -> Unit
     ) {
         if (filesMap == null) throw NullPointerException("Files Map is null , Call start sync before")
         val files = filesMap!!
@@ -263,7 +300,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
                         updateLocally(syncFile)
                     }
                 } else {
-                    if (syncFile.cloudId != null && provider.deleteFile(syncFile.cloudId!!)) {
+                    if (syncFile.cloudId != null && provider.deleteFile(syncFile.cloudId!!) { onMessage(MessageType.Warning,it) }) {
                         localDelete()
                     }
                 }
