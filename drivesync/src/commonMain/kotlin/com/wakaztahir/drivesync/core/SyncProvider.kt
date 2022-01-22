@@ -17,7 +17,9 @@ class SyncProvider(val provider: SyncServiceProvider) {
     @Throws
     private suspend fun getFilesMap() {
         filesMap = provider.getFilesMap()
-        totalSize = filesMap!!.size.toFloat()
+        if (filesMap != null) {
+            totalSize = filesMap!!.size.toFloat()
+        }
     }
 
     //----Database Json Sync Entity
@@ -30,6 +32,10 @@ class SyncProvider(val provider: SyncServiceProvider) {
     ) {
         val entityMap = hashMapOf<String, DatabaseJsonSyncEntity<*>>()
         getFilesMap()
+        if (filesMap == null) {
+            onMessage(MessageType.Error, "Empty response received")
+            return
+        }
         entities.forEachIndexed { index, entity ->
             syncSingle(entity) { progress ->
                 onProgress(progress * (index / entities.size.toFloat()) * ((totalSize - filesMap!!.size) / totalSize))
@@ -76,7 +82,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
                     entity.deleteInDB(item)
                 },
                 updateLocally = {
-                    if (entity.shouldBeDownloaded(item,it)) {
+                    if (entity.shouldBeDownloaded(item, it)) {
                         val file = provider.downloadStringFile(entity.getCloudID(item)!!)
                         if (file != null) {
                             entity.updateInDB(oldItem = item, newItem = entity.convertFromJson(file))
@@ -121,6 +127,10 @@ class SyncProvider(val provider: SyncServiceProvider) {
     ) {
         val entityMap = hashMapOf<String, BinaryStorageSyncEntity<*>>()
         getFilesMap()
+        if (filesMap == null) {
+            onMessage(MessageType.Error, "Empty response received")
+            return
+        }
         entities.forEachIndexed { index, entity ->
             syncSingle(entity) { progress ->
                 onProgress(progress * (index / entities.size.toFloat()) * ((totalSize - filesMap!!.size) / totalSize))
@@ -167,7 +177,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
                     entity.deleteItemFile(item)
                 },
                 updateLocally = {
-                    if (entity.shouldDownloadFileFor(item,it)) {
+                    if (entity.shouldDownloadFileFor(item, it)) {
                         if (it.cloudId != null) {
                             val byteArray = provider.downloadBinaryFile(it.cloudId!!)
                             if (byteArray != null) {
