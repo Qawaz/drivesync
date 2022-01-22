@@ -53,10 +53,12 @@ actual open class DriveServiceProvider(
                 .execute()
             val filesMap = hashMapOf<String, SyncFile>()
             filesList.files.forEach {
-                val uuid = it.properties["uuid"]
-                if (!uuid.isNullOrEmpty()) {
-                    filesMap[uuid] = SyncFile(it)
-                }
+                kotlin.runCatching {
+                    val uuid = it.properties["uuid"]
+                    if (!uuid.isNullOrEmpty()) {
+                        filesMap[uuid] = SyncFile(it)
+                    }
+                }.onFailure { onFailure(Throwable(message = "Error during getting properties of a file", it.cause)) }
             }
             return@withContext filesMap
         }.onFailure(onFailure).getOrNull()

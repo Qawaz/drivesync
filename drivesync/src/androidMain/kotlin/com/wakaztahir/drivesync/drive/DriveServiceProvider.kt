@@ -14,13 +14,12 @@ import com.wakaztahir.drivesync.model.SyncFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
-import kotlin.collections.HashMap
 
 actual open class DriveServiceProvider(
     appName: String,
     context: Context,
     scopes: List<String> = listOf(DriveScopes.DRIVE_APPDATA),
-    val onFailure: (Throwable) -> Unit = { Log.e("TL_DriveService","Error in Drive Service",it) }
+    val onFailure: (Throwable) -> Unit = { Log.e("TL_DriveService", "Error in Drive Service", it) }
 ) : SyncServiceProvider {
 
     private var driveService: Drive
@@ -58,10 +57,12 @@ actual open class DriveServiceProvider(
                 .execute()
             val filesMap = hashMapOf<String, SyncFile>()
             filesList.files.forEach {
-                val uuid = it.properties["uuid"]
-                if (!uuid.isNullOrEmpty()) {
-                    filesMap[uuid] = SyncFile(it)
-                }
+                kotlin.runCatching {
+                    val uuid = it.properties["uuid"]
+                    if (!uuid.isNullOrEmpty()) {
+                        filesMap[uuid] = SyncFile(it)
+                    }
+                }.onFailure { onFailure(Throwable(message = "Error during getting properties of a file", it.cause)) }
             }
             return@withContext filesMap
         }.onFailure(onFailure).getOrNull()
