@@ -44,7 +44,7 @@ actual open class DriveServiceProvider(
         val file = kotlin.runCatching {
             SyncFile(
                 driveService.files().get(fileId)
-                    .setFields("id,name,description,mimeType,createdTime,modifiedTime,appProperties")
+                    .setFields("id,name,description,mimeType,createdTime,modifiedTime,properties")
                     .execute()
             )
         }.onFailure(onFailure).getOrNull()
@@ -54,7 +54,7 @@ actual open class DriveServiceProvider(
     actual override suspend fun getFilesMap(): HashMap<String, SyncFile>? = withContext(Dispatchers.IO) {
         return@withContext kotlin.runCatching {
             val filesList = driveService.files().list().setSpaces("appDataFolder")
-                .setFields("files('id,name,description,mimeType,createdTime,modifiedTime,appProperties')")
+                .setFields("id,name,description,mimeType,createdTime,modifiedTime,properties")
                 .execute()
             val filesMap = hashMapOf<String, SyncFile>()
             filesList.files.forEach {
