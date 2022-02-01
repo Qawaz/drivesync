@@ -90,7 +90,7 @@ afterEvaluate {
         repositories {
             maven {
                 name = "GithubPackages"
-                url = uri("https://maven.pkg.github.com/timeline-notes/drivesync")
+                url = uri("https://maven.pkg.github.com/codeckle/drivesync")
 
                 credentials {
                     username = (githubProperties["gpr.usr"] ?: System.getenv("GPR_USER")).toString()
