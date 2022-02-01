@@ -16,9 +16,11 @@ class SyncProvider(val provider: SyncServiceProvider) {
 
     @Throws
     private suspend fun getFilesMap(onFailure : (Throwable)->Unit) {
-        filesMap = provider.getFilesMap(onFailure)
-        if (filesMap != null) {
-            totalSize = filesMap!!.size.toFloat()
+        if(filesMap == null) {
+            filesMap = provider.getFilesMap(onFailure)
+            if (filesMap != null) {
+                totalSize = filesMap!!.size.toFloat()
+            }
         }
     }
 
@@ -331,6 +333,10 @@ class SyncProvider(val provider: SyncServiceProvider) {
             return false
         }
         return true
+    }
+
+    fun reset(){
+        filesMap = null
     }
 
 }
