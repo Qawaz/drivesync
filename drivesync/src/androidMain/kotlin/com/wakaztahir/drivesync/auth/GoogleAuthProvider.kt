@@ -40,6 +40,7 @@ actual class GoogleAuthProvider(
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(clientId)
             .requestEmail()
+            .requestProfile()
             .requestScopes(Scope(Scopes.DRIVE_APPFOLDER))
             .build()
 
@@ -104,9 +105,3 @@ actual class GoogleAuthProvider(
         return kotlin.runCatching { GoogleUser(task.result) }.onFailure(onFailure).getOrNull()
     }
 }
-
-fun createGoogleAuthProvider(
-    activity: Activity,
-    clientId: String,
-    onFailure: (Throwable) -> Unit = { it.printStackTrace() }
-): GoogleAuthProvider = GoogleAuthProvider(activity, clientId, onFailure)
