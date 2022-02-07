@@ -21,11 +21,17 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    buildTypes {
+        getByName("release"){
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
 }
 
 kotlin {
     android {
-        publishLibraryVariants("release")
+        publishLibraryVariants("release","debug")
     }
     jvm("desktop") {
         compilations.all {
