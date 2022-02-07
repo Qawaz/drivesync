@@ -16,6 +16,8 @@ android {
     defaultConfig {
         minSdk = BuildConfig.Android.minSdkVersion
         targetSdk = BuildConfig.Android.targetSdkVersion
+
+        consumerProguardFiles("proguard-rules.pro")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
