@@ -1,4 +1,14 @@
 site_name: Google Drive Sync
+site_description: 'Google Drive Sync Library'
+site_author: 'Waqas Tahir'
+site_url: 'https://codeckle.github.io/drivesync/'
+remote_branch: gh-pages
+
+docs_dir: docs
+
+repo_name: 'drivesync'
+repo_url: 'https://github.com/codeckle/drivesync'
+
 theme:
   name: material
 markdown_extensions:
