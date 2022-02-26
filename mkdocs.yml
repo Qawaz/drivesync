@@ -1,0 +1,12 @@
+site_name: Google Drive Sync
+theme:
+  name: material
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+nav:
+  - 'Overview': README.md
+  - 'API' : api/drivesync

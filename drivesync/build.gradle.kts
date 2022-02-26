@@ -5,6 +5,7 @@ plugins {
     kotlin("multiplatform")
     id("com.android.library")
     id("maven-publish")
+    id("org.jetbrains.dokka")
 }
 
 group = BuildConfig.Info.group
