@@ -1,5 +1,5 @@
-import java.util.Properties
 import java.io.FileInputStream
+import java.util.*
 
 plugins {
     kotlin("multiplatform")
@@ -83,10 +83,7 @@ kotlin {
 
 
 val githubProperties = Properties()
-try {
-    githubProperties.load(FileInputStream(rootProject.file("github.properties")))
-} catch (e: Exception) {
-}
+kotlin.runCatching { githubProperties.load(FileInputStream(rootProject.file("github.properties"))) }
 
 afterEvaluate {
     publishing {
@@ -95,10 +92,12 @@ afterEvaluate {
                 name = "GithubPackages"
                 url = uri("https://maven.pkg.github.com/codeckle/drivesync")
 
-                credentials {
-                    username = (githubProperties["gpr.usr"] ?: System.getenv("GPR_USER")).toString()
-                    password = (githubProperties["gpr.key"] ?: System.getenv("GPR_API_KEY")).toString()
-                }
+                runCatching {
+                    credentials {
+                        username = (githubProperties["gpr.usr"] ?: System.getenv("GPR_USER")).toString()
+                        password = (githubProperties["gpr.key"] ?: System.getenv("GPR_API_KEY")).toString()
+                    }
+                }.onFailure { it.printStackTrace() }
             }
         }
     }
