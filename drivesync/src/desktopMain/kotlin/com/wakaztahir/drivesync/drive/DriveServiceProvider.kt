@@ -81,6 +81,7 @@ actual open class DriveServiceProvider(
         withContext(Dispatchers.IO) {
             if (file.mimeType == null) onFailure(Throwable("File mimetype cannot be null"))
             val uploadedFile = kotlin.runCatching {
+                file.file.parents = listOf("appDataFolder")
                 val contentStream = ByteArrayContent.fromString(file.mimeType, content)
                 if (file.cloudId == null) {
                     SyncFile(driveService.files().create(file.file, contentStream).execute())
@@ -102,6 +103,7 @@ actual open class DriveServiceProvider(
         withContext(Dispatchers.IO) {
             val uploadedFile = kotlin.runCatching {
                 if (file.mimeType == null) onFailure(Throwable("File mimetype cannot be null"))
+                file.file.parents = listOf("appDataFolder")
                 val contentStream = InputStreamContent(file.mimeType, content.inputStream())
                 if (file.cloudId == null) {
                     SyncFile(driveService.files().create(file.file, contentStream).execute())
