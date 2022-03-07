@@ -35,16 +35,14 @@ actual class SyncFile internal constructor(internal val file: File) {
             file.id = value
         }
     actual var createdTime: Long?
-        get() = if (file.createdTime != null && file.createdTime.value > 100) file.createdTime.value else file.properties["createdTime"]?.toLongOrNull()
+        get() = file.createdTime.value
         set(value) {
             file.createdTime = value?.let { DateTime(it) }
-            file.properties["createdTime"] = value.toString()
         }
     actual var modifiedTime: Long?
-        get() = if (file.modifiedTime != null && file.modifiedTime.value > 100) file.modifiedTime.value else file.properties["modifiedTime"]?.toLongOrNull()
+        get() = file.modifiedTime.value
         set(value) {
             file.modifiedTime = value?.let { DateTime(it) }
-            file.properties["modifiedTime"] = value.toString()
         }
     actual var properties: MutableMap<String, String>?
         get() = file.properties
@@ -68,10 +66,9 @@ actual fun createNewSyncFile(
         file.id = cloudId
         file.mimeType = mimeType
         file.modifiedTime = DateTime(modifiedTime)
-        file.properties = mutableMapOf(
+        file.properties = hashMapOf(
             "type" to type,
-            "uuid" to uuid,
-            "modifiedTime" to modifiedTime.toString()
+            "uuid" to uuid
         )
     })
 }
