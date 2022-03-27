@@ -1,0 +1,8 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+$dokka.location:com.wakaztahir.drivesync.auth/GoogleAuthProvider/onFailure/#/PointingToDeclaration/drivesync/com.wakaztahir.drivesync.auth/-google-auth-provider/[desktop]on-failure.html
+module:drivesync
+com.wakaztahir.drivesync.auth
+com.wakaztahir.drivesync.core
+com.wakaztahir.drivesync.drive
+com.wakaztahir.drivesync.model
