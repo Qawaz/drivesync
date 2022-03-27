@@ -8,7 +8,6 @@ import androidx.compose.runtime.LaunchedEffect
 import com.wakaztahir.drivesync.auth.GoogleAuthProvider
 import com.wakaztahir.drivesync.core.*
 import com.wakaztahir.drivesync.drive.DriveServiceProvider
-import com.wakaztahir.drivesync.model.SyncFile
 
 class MainActivity : ComponentActivity() {
 
@@ -17,7 +16,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val authProvider = GoogleAuthProvider(activity = this,clientId = "fake-id")
-        val driveSyncProvider = DriveServiceProvider(appName = "DriveSyncTest",this)
+        val driveSyncProvider = DriveServiceProvider(appName = "DriveSyncTest", this)
         val syncProvider = SyncProvider(provider = driveSyncProvider)
 
         val myItems = listOf<MyItem>(MyItem(),MyItem(),MyItem(),MyItem())

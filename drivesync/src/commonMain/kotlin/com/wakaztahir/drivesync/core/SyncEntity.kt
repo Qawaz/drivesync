@@ -1,7 +1,7 @@
 package com.wakaztahir.drivesync.core
 
 import com.wakaztahir.drivesync.model.SyncFile
-import com.wakaztahir.drivesync.model.createNewSyncFile
+import com.wakaztahir.drivesync.model.createDriveSyncFile
 
 abstract class SyncEntity<T> {
 
@@ -51,14 +51,16 @@ abstract class SyncEntity<T> {
     abstract fun getModifiedTime(item: T): Long
 
     open fun onCreateSyncFile(item: T, mimeType: String): SyncFile {
-        return createNewSyncFile(
+        return createDriveSyncFile(
             name = getName(item) ?: "Sync Entity's Name",
             description = getDescription(item) ?: "Sync Entity's Description",
-            type = typeKey,
             mimeType = mimeType,
-            uuid = getSyncUUID(item),
             cloudId = getCloudID(item),
             modifiedTime = getModifiedTime(item),
+            properties = mapOf(
+                "type" to typeKey,
+                "uuid" to getSyncUUID(item)
+            )
         )
     }
 }

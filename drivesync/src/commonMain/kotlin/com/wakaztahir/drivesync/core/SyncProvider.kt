@@ -1,6 +1,8 @@
 package com.wakaztahir.drivesync.core
 
 import com.wakaztahir.drivesync.model.SyncFile
+import com.wakaztahir.drivesync.model.type
+import com.wakaztahir.drivesync.model.uuid
 
 class SyncProvider(val provider: SyncServiceProvider) {
 
@@ -17,7 +19,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
     @Throws
     private suspend fun getFilesMap(onFailure : (Throwable)->Unit) {
         if(filesMap == null) {
-            filesMap = provider.getFilesMap(onFailure)
+            filesMap = provider.getFilesMap()
             if (filesMap != null) {
                 totalSize = filesMap!!.size.toFloat()
             }
@@ -68,7 +70,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
 
                 if (entity != null) {
                     if (entity.shouldBeDownloaded(syncFile)) {
-                        val json = syncFile.cloudId?.let { provider.downloadStringFile(it){ onMessage(MessageType.Warning,it) } }
+                        val json = syncFile.cloudId?.let { provider.downloadStringFile(it) }
                         if (json != null) {
                             entity.convertFromJsonAndInsertIntoDB(syncFile, json)
                         }
@@ -98,7 +100,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
                     },
                     updateLocally = {
                         if (entity.shouldBeDownloaded(item, it)) {
-                            val file = provider.downloadStringFile(entity.getCloudID(item)!!) { onMessage(MessageType.Warning,it) }
+                            val file = provider.downloadStringFile(entity.getCloudID(item)!!)
                             if (file != null) {
                                 entity.updateInDB(oldItem = item, newItem = entity.convertFromJson(file))
                             } else {
@@ -117,7 +119,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
                                         newSyncFile.cloudId = syncFile.cloudId
                                     },
                                 content = entity.convertToJson(item)
-                            ) { onMessage(MessageType.Warning,it) }
+                            )
                         }
                     },
                     insertInCloud = {
@@ -125,7 +127,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
                             val file = provider.uploadStringFile(
                                 entity.onCreateSyncFile(item, mimeType = "application/json"),
                                 entity.convertToJson(item)
-                            ) { onMessage(MessageType.Warning,it) }
+                            )
                             if (file?.cloudId != null) {
                                 entity.updateItemCloudIDInDB(item, file.cloudId!!)
                             }
@@ -182,7 +184,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
 
                 if (entity != null) {
                     if (entity.shouldDownloadFileFor(syncFile)) {
-                        val byteArray = provider.downloadBinaryFile(syncFile.cloudId!!) { onMessage(MessageType.Warning,it) }
+                        val byteArray = provider.downloadBinaryFile(syncFile.cloudId!!)
                         if (byteArray != null) {
                             entity.createItemFile(syncFile, byteArray)
                         }
@@ -215,7 +217,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
                     updateLocally = {
                         if (entity.shouldDownloadFileFor(item, it)) {
                             if (it.cloudId != null) {
-                                val byteArray = provider.downloadBinaryFile(it.cloudId!!) { onMessage(MessageType.Warning,it) }
+                                val byteArray = provider.downloadBinaryFile(it.cloudId!!)
                                 if (byteArray != null) {
                                     entity.updateItemFile(item, it, byteArray)
                                 }
@@ -234,7 +236,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
                                         newSyncFile.cloudId = syncFile.cloudId
                                     },
                                     content = byteArray
-                                ) { onMessage(MessageType.Warning,it) }
+                                )
                             }
                         }
                     },
@@ -248,7 +250,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
                                         mimeType = entity.getMimeType(item).ifEmpty { "application/octet-stream" }
                                     ),
                                     content = byteArray
-                                ) { onMessage(MessageType.Warning,it) }
+                                )
                             }
                         }
                     },
@@ -302,7 +304,7 @@ class SyncProvider(val provider: SyncServiceProvider) {
                         updateLocally(syncFile)
                     }
                 } else {
-                    if (syncFile.cloudId != null && provider.deleteFile(syncFile.cloudId!!) { onMessage(MessageType.Warning,it) }) {
+                    if (syncFile.cloudId != null && provider.deleteFile(syncFile.cloudId!!)) {
                         localDelete()
                     }
                 }

@@ -1,3 +1,5 @@
+@file:JvmName("SyncFileAndroid")
+
 package com.wakaztahir.drivesync.model
 
 import com.google.api.client.util.DateTime
@@ -14,20 +16,10 @@ actual class SyncFile internal constructor(internal val file: File) {
         set(value) {
             file.description = value
         }
-    actual var type: String?
-        get() = file.properties["type"]
-        set(value) {
-            file.properties["type"] = value
-        }
     actual var mimeType: String?
         get() = file.mimeType
         set(value) {
             file.mimeType = value
-        }
-    actual var uuid: String?
-        get() = file.properties["uuid"]
-        set(value) {
-            file.properties["uuid"] = value
         }
     actual var cloudId: String?
         get() = file.id
@@ -51,14 +43,13 @@ actual class SyncFile internal constructor(internal val file: File) {
         }
 }
 
-actual fun createNewSyncFile(
+actual fun createDriveSyncFile(
     name: String,
     description: String,
-    type: String,
     mimeType: String,
-    uuid: String,
     cloudId: String?,
-    modifiedTime: Long
+    modifiedTime: Long,
+    properties: Map<String, String>
 ): SyncFile {
     return SyncFile(File().also { file ->
         file.name = name
@@ -66,9 +57,6 @@ actual fun createNewSyncFile(
         file.id = cloudId
         file.mimeType = mimeType
         file.modifiedTime = DateTime(modifiedTime)
-        file.properties = hashMapOf(
-            "type" to type,
-            "uuid" to uuid
-        )
+        file.properties = properties
     })
 }

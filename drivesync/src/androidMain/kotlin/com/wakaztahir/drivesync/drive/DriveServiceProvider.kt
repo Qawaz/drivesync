@@ -18,8 +18,7 @@ import java.util.*
 actual open class DriveServiceProvider(
     appName: String,
     context: Context,
-    scopes: List<String> = listOf(DriveScopes.DRIVE_APPDATA),
-    onFailure: (Throwable) -> Unit = { Log.e("TL_DriveService", "Error in Drive Service", it) }
+    scopes: List<String> = listOf(DriveScopes.DRIVE_APPDATA)
 ) : SyncServiceProvider {
 
     private var driveService: Drive
@@ -28,9 +27,6 @@ actual open class DriveServiceProvider(
         val credential: GoogleAccountCredential =
             GoogleAccountCredential.usingOAuth2(context.applicationContext, scopes)
         val googleSignInAccount = GoogleSignIn.getLastSignedInAccount(context)
-        if (googleSignInAccount == null) {
-            onFailure(Throwable(message = "Google sign in account not found , sign in with auth provider before making an instance of service provider"))
-        }
         credential.selectedAccount = googleSignInAccount?.account
         driveService = Drive.Builder(
             com.google.api.client.http.javanet.NetHttpTransport(),
@@ -39,38 +35,40 @@ actual open class DriveServiceProvider(
         ).setApplicationName(appName).build()
     }
 
-    actual override suspend fun getSyncFile(fileId: String, onFailure: (Throwable) -> Unit): SyncFile? = withContext(Dispatchers.IO) {
-        val file = kotlin.runCatching {
-            SyncFile(
-                driveService.files().get(fileId)
-                    .setFields("id,name,description,mimeType,createdTime,modifiedTime,properties")
-                    .execute()
-            )
-        }.onFailure(onFailure).getOrNull()
-        return@withContext file
-    }
-
-    actual override suspend fun getFilesMap(onFailure: (Throwable) -> Unit): HashMap<String, SyncFile>? = withContext(Dispatchers.IO) {
-        return@withContext kotlin.runCatching {
-            val filesList = driveService.files().list().setSpaces("appDataFolder")
-                .setFields("files(id,name,description,mimeType,createdTime,modifiedTime,properties)")
+    actual override suspend fun getSyncFile(fileId: String): SyncFile? = withContext(Dispatchers.IO) {
+        return@withContext SyncFile(
+            driveService.files().get(fileId)
+                .setFields("id,name,description,mimeType,createdTime,modifiedTime,properties")
                 .execute()
-            val filesMap = hashMapOf<String, SyncFile>()
-            filesList.files.forEach {
-                kotlin.runCatching {
-                    val uuid = it.properties["uuid"]
-                    if (!uuid.isNullOrEmpty()) {
-                        filesMap[uuid] = SyncFile(it)
-                    }
-                }.onFailure { onFailure(Throwable(message = "Error during getting properties of a file", it.cause)) }
-            }
-            return@withContext filesMap
-        }.onFailure(onFailure).getOrNull()
+        )
     }
 
-    actual override suspend fun uploadStringFile(file: SyncFile, content: String, onFailure: (Throwable) -> Unit): SyncFile? =
+    actual override suspend fun getFilesList(): List<SyncFile> {
+        val filesList = driveService.files().list().setSpaces("appDataFolder")
+            .setFields("files(id,name,description,mimeType,createdTime,modifiedTime,properties)")
+            .execute()
+        return filesList.files.map { SyncFile(it) }
+    }
+
+    actual override suspend fun getFilesMap(): HashMap<String, SyncFile>? = withContext(Dispatchers.IO) {
+        val filesList = driveService.files().list().setSpaces("appDataFolder")
+            .setFields("files(id,name,description,mimeType,createdTime,modifiedTime,properties)")
+            .execute()
+        val filesMap = hashMapOf<String, SyncFile>()
+        filesList.files.forEach {
+            kotlin.runCatching {
+                val uuid = it.properties["uuid"] ?: it.id
+                if (!uuid.isNullOrEmpty()) {
+                    filesMap[uuid] = SyncFile(it)
+                }
+            }
+        }
+        return@withContext filesMap
+    }
+
+    actual override suspend fun uploadStringFile(file: SyncFile, content: String): SyncFile? =
         withContext(Dispatchers.IO) {
-            if (file.mimeType == null) onFailure(Throwable("File mimetype cannot be null"))
+            if (file.mimeType == null) error(Throwable("File mimetype cannot be null"))
             val uploadedFile = kotlin.runCatching {
                 file.file.parents = listOf("appDataFolder")
                 val contentStream = ByteArrayContent.fromString(file.mimeType, content)
@@ -86,48 +84,40 @@ actual open class DriveServiceProvider(
             return@withContext null
         }
 
-    actual override suspend fun uploadBinaryFile(file: SyncFile, content: ByteArray, onFailure: (Throwable) -> Unit): SyncFile? =
+    actual override suspend fun uploadBinaryFile(file: SyncFile, content: ByteArray): SyncFile? =
         withContext(Dispatchers.IO) {
-            val uploadedFile = kotlin.runCatching {
-                if (file.mimeType == null) onFailure(Throwable("File mimetype cannot be null"))
-                file.file.parents = listOf("appDataFolder")
-                val contentStream = InputStreamContent(file.mimeType, content.inputStream())
-                if (file.cloudId == null) {
-                    SyncFile(driveService.files().create(file.file, contentStream).execute())
-                } else {
-                    SyncFile(driveService.files().update(file.cloudId, file.file, contentStream).execute())
-                }
-            }.onFailure(action = onFailure).getOrNull()
-            if (uploadedFile != null) {
-                return@withContext uploadedFile
+            if (file.mimeType == null) error("file mimetype cannot be null")
+            file.file.parents = listOf("appDataFolder")
+            val contentStream = InputStreamContent(file.mimeType, content.inputStream())
+            if (file.cloudId == null) {
+                return@withContext SyncFile(driveService.files().create(file.file, contentStream).execute())
+            } else {
+                return@withContext SyncFile(
+                    driveService.files().update(file.cloudId, file.file, contentStream).execute()
+                )
             }
-            return@withContext null
         }
 
 
-    actual override suspend fun downloadStringFile(fileId: String, onFailure: (Throwable) -> Unit): String? = withContext(Dispatchers.IO) {
-        kotlin.runCatching {
-            driveService.files().get(fileId).executeMediaAsInputStream().use {
-                val s: Scanner = Scanner(it).useDelimiter("\\A")
-                val result = if (s.hasNext()) s.next() else ""
-                result
-            }
-        }.onFailure(onFailure).getOrNull()
+    actual override suspend fun downloadStringFile(fileId: String): String? = withContext(Dispatchers.IO) {
+        driveService.files().get(fileId).executeMediaAsInputStream().use {
+            val s: Scanner = Scanner(it).useDelimiter("\\A")
+            val result = if (s.hasNext()) s.next() else ""
+            result
+        }
     }
 
-    actual override suspend fun downloadBinaryFile(fileId: String, onFailure: (Throwable) -> Unit): ByteArray? = withContext(Dispatchers.IO) {
-        kotlin.runCatching {
-            driveService.files().get(fileId).executeMediaAsInputStream().use { inputStream ->
-                inputStream.readBytes()
-            }
-        }.onFailure(onFailure).getOrNull()
+    actual override suspend fun downloadBinaryFile(fileId: String): ByteArray? = withContext(Dispatchers.IO) {
+        driveService.files().get(fileId).executeMediaAsInputStream().use { inputStream ->
+            inputStream.readBytes()
+        }
     }
 
 
-    actual override suspend fun deleteFile(fileId: String, onFailure: (Throwable) -> Unit): Boolean = withContext(Dispatchers.IO) {
+    actual override suspend fun deleteFile(fileId: String): Boolean = withContext(Dispatchers.IO) {
         val operation = kotlin.runCatching {
             driveService.files().delete(fileId).execute()
-        }.onFailure(onFailure)
+        }
         return@withContext operation.isSuccess
     }
 }
