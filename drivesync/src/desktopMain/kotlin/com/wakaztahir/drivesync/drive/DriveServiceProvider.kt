@@ -65,7 +65,7 @@ actual open class DriveServiceProvider(
         return@withContext filesMap
     }
 
-    actual override suspend fun uploadStringFile(file: SyncFile, content: String): SyncFile? =
+    actual override suspend fun uploadFile(file: SyncFile, content: String): SyncFile? =
         withContext(Dispatchers.IO) {
             if (file.mimeType == null) error(Throwable("File mimetype cannot be null"))
             val uploadedFile = kotlin.runCatching {
@@ -83,10 +83,7 @@ actual open class DriveServiceProvider(
             return@withContext null
         }
 
-    actual override suspend fun uploadBinaryFile(file: SyncFile, content: ByteArray): SyncFile? =
-        uploadBinaryFile(file = file, content = content.inputStream())
-
-    actual override suspend fun uploadBinaryFile(file: SyncFile, content: StorageInputStream): SyncFile? =
+    actual override suspend fun uploadFile(file: SyncFile, content: StorageInputStream): SyncFile? =
         withContext(Dispatchers.IO) {
             if (file.mimeType == null) error("file mimetype cannot be null")
             file.file.parents = listOf("appDataFolder")
@@ -100,7 +97,7 @@ actual open class DriveServiceProvider(
             }
         }
 
-    actual override suspend fun downloadStringFile(fileId: String): String? = withContext(Dispatchers.IO) {
+    actual override suspend fun downloadFileAsString(fileId: String): String? = withContext(Dispatchers.IO) {
         driveService.files().get(fileId).executeMediaAsInputStream().use {
             val s: Scanner = Scanner(it).useDelimiter("\\A")
             val result = if (s.hasNext()) s.next() else ""
@@ -108,10 +105,8 @@ actual open class DriveServiceProvider(
         }
     }
 
-    actual override suspend fun downloadBinaryFile(fileId: String): ByteArray? = withContext(Dispatchers.IO) {
-        driveService.files().get(fileId).executeMediaAsInputStream().use { inputStream ->
-            inputStream.readBytes()
-        }
+    actual override suspend fun downloadFile(fileId: String): StorageInputStream? = withContext(Dispatchers.IO) {
+        driveService.files().get(fileId).executeMediaAsInputStream()
     }
 
 

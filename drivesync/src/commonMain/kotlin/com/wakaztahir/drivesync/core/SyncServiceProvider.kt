@@ -7,7 +7,7 @@ interface SyncServiceProvider {
     /**
      * Function to get list of files present in the drive
      */
-    suspend fun getFilesList() : List<SyncFile>
+    suspend fun getFilesList(): List<SyncFile>
 
     /**
      * Function to get the drive file list containing multiple files
@@ -27,30 +27,23 @@ interface SyncServiceProvider {
      * Make sure to set file mimetype
      * Set the id of the drive file to null if inserting and the actual id if updating
      */
-    suspend fun uploadStringFile(file: SyncFile,content: String): SyncFile?
+    suspend fun uploadFile(file: SyncFile, content: String): SyncFile?
 
     /**
      * Make sure to set file mimetype
      * Set the id of the drive file to null if inserting and the actual id if updating
      */
-    suspend fun uploadBinaryFile(file: SyncFile, content: ByteArray): SyncFile?
-
-    /**
-     * Make sure to set file mimetype
-     * Set the id of the drive file to null if inserting and the actual id if updating
-     */
-    suspend fun uploadBinaryFile(file : SyncFile,content : StorageInputStream) : SyncFile?
+    suspend fun uploadFile(file: SyncFile, content: StorageInputStream): SyncFile?
 
     /**
      * Download a file fileId which contains a string
      */
-    suspend fun downloadStringFile(fileId: String): String?
+    suspend fun downloadFileAsString(fileId: String): String?
 
     /**
-     * Download file with fileId which contains a byte array
+     * Download file with fileId as input stream
      */
-    suspend fun downloadBinaryFile(fileId: String): ByteArray?
-
+    suspend fun downloadFile(fileId: String): StorageInputStream?
 
     /**
      * Delete a file with given fileId

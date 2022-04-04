@@ -28,29 +28,23 @@ expect open class DriveServiceProvider : SyncServiceProvider {
      * Make sure to set file mimetype
      * Set the id of the drive file to null if inserting and the actual id if updating
      */
-    override suspend fun uploadStringFile(file: SyncFile, content: String): SyncFile?
+    override suspend fun uploadFile(file: SyncFile, content: String): SyncFile?
 
     /**
      * Make sure to set file mimetype
      * Set the id of the drive file to null if inserting and the actual id if updating
      */
-    override suspend fun uploadBinaryFile(file: SyncFile, content: ByteArray): SyncFile?
-
-    /**
-     * Make sure to set file mimetype
-     * Set the id of the drive file to null if inserting and the actual id if updating
-     */
-    override suspend fun uploadBinaryFile(file: SyncFile, content: StorageInputStream): SyncFile?
+    override suspend fun uploadFile(file: SyncFile, content: StorageInputStream): SyncFile?
 
     /**
      * Download a file fileId which contains a string
      */
-    override suspend fun downloadStringFile(fileId: String): String?
+    override suspend fun downloadFileAsString(fileId: String): String?
 
     /**
-     * Download file with fileId which contains a byte array
+     * Download file with fileId as input stream
      */
-    override suspend fun downloadBinaryFile(fileId: String): ByteArray?
+    override suspend fun downloadFile(fileId: String): StorageInputStream?
 
     /**
      * Delete a file with given fileId

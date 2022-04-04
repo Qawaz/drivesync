@@ -1,6 +1,7 @@
 package com.wakaztahir.drivesync.core
 
 import com.wakaztahir.drivesync.model.SyncFile
+import com.wakaztahir.tlstorage.StorageInputStream
 
 interface BinarySyncEntity<T> {
     /**
@@ -16,50 +17,51 @@ interface BinarySyncEntity<T> {
      * This function is called after the filter has decided that the file
      * has become outdated or not present in the local storage so returning true default
      */
-    fun shouldDownloadFileFor(item: T,syncFile : SyncFile): Boolean = true
+    fun shouldDownloadFileFor(item: T, syncFile: SyncFile): Boolean = true
 
     /**
      * Same as [shouldDownloadFileFor] but since item is not available
      * when the file metadata is downloaded from cloud and its the only thing
      * present in the cloud
      */
-    fun shouldDownloadFileFor(syncFile : SyncFile) = true
+    fun shouldDownloadFileFor(syncFile: SyncFile) = true
 
     /**
      * Get mimeType of the file
      * if empty "application/octet-stream" will be used
      */
-    fun getMimeType(item : T) : String
+    fun getMimeType(item: T): String
 
     /**
-     * Get bytearray of item that is going to be uploaded
+     * Get input stream for [item] that is going to be uploaded
      * Return null if file not found and it won't be uploaded
+     * The input stream will be closed automatically
      */
-    fun readBytes(item: T): ByteArray?
+    fun inputStream(item: T): StorageInputStream?
 
     /**
      * Update the downloaded byte array in storage because it has been
      * updated on cloud
      */
-    fun updateItemFile(item: T,file : SyncFile, content: ByteArray)
+    fun updateItemFile(item: T, file: SyncFile, content: StorageInputStream)
 
     /**
      * Create the downloaded byte array in storage because it has been
      * created a new on cloud
      */
-    fun createItemFile(file : SyncFile,content: ByteArray)
+    fun createItemFile(file: SyncFile, content: StorageInputStream)
 
     /**
      * Delete the file present in storage since it has been deleted
      * on cloud
      */
-    fun deleteItemFile(item : T)
+    fun deleteItemFile(item: T)
 }
 
 /**
  * This entity is responsible for syncing files in the cloud
  */
-abstract class BinaryStorageSyncEntity<T> : SyncEntity<T>(), BinarySyncEntity<T>{
+abstract class BinaryStorageSyncEntity<T> : SyncEntity<T>(), BinarySyncEntity<T> {
 //    override fun onCreateSyncFile(item: T, mimeType: String): SyncFile {
 //        return super.onCreateSyncFile(item, mimeType).apply {
 //            // todo put additional properties needed for file
