@@ -1,7 +1,6 @@
 package com.wakaztahir.drivesync.drive
 
 import android.content.Context
-import android.util.Log
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.ByteArrayContent
@@ -11,6 +10,7 @@ import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
 import com.wakaztahir.drivesync.core.SyncServiceProvider
 import com.wakaztahir.drivesync.model.SyncFile
+import com.wakaztahir.tlstorage.StorageInputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -85,10 +85,13 @@ actual open class DriveServiceProvider(
         }
 
     actual override suspend fun uploadBinaryFile(file: SyncFile, content: ByteArray): SyncFile? =
+        uploadBinaryFile(file = file, content = content.inputStream())
+
+    actual override suspend fun uploadBinaryFile(file: SyncFile, content: StorageInputStream): SyncFile? =
         withContext(Dispatchers.IO) {
             if (file.mimeType == null) error("file mimetype cannot be null")
             file.file.parents = listOf("appDataFolder")
-            val contentStream = InputStreamContent(file.mimeType, content.inputStream())
+            val contentStream = InputStreamContent(file.mimeType, content)
             if (file.cloudId == null) {
                 return@withContext SyncFile(driveService.files().create(file.file, contentStream).execute())
             } else {
@@ -97,7 +100,6 @@ actual open class DriveServiceProvider(
                 )
             }
         }
-
 
     actual override suspend fun downloadStringFile(fileId: String): String? = withContext(Dispatchers.IO) {
         driveService.files().get(fileId).executeMediaAsInputStream().use {

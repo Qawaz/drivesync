@@ -2,6 +2,7 @@ package com.wakaztahir.drivesync.drive
 
 import com.wakaztahir.drivesync.core.SyncServiceProvider
 import com.wakaztahir.drivesync.model.SyncFile
+import com.wakaztahir.tlstorage.StorageInputStream
 
 expect open class DriveServiceProvider : SyncServiceProvider {
     /**
@@ -34,6 +35,12 @@ expect open class DriveServiceProvider : SyncServiceProvider {
      * Set the id of the drive file to null if inserting and the actual id if updating
      */
     override suspend fun uploadBinaryFile(file: SyncFile, content: ByteArray): SyncFile?
+
+    /**
+     * Make sure to set file mimetype
+     * Set the id of the drive file to null if inserting and the actual id if updating
+     */
+    override suspend fun uploadBinaryFile(file: SyncFile, content: StorageInputStream): SyncFile?
 
     /**
      * Download a file fileId which contains a string
