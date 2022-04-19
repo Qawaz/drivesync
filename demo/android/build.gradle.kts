@@ -9,20 +9,19 @@ version = BuildConfig.Info.version
 
 dependencies {
     implementation("androidx.activity:activity-compose:1.4.0")
-    with(BuildConfig.Dependencies.Compose){
-        api(runtime)
-        api(foundation)
-        api(material)
-    }
+    api(compose.ui)
+    api(compose.runtime)
+    api(compose.material)
+    api(compose.foundation)
     implementation(project(":drivesync"))
 }
 
 android {
-    compileSdk = BuildConfig.Android.compileSdkVersion
+    compileSdk = 31
     defaultConfig {
         applicationId = "com.wakaztahir.android"
-        minSdk = BuildConfig.Android.minSdkVersion
-        targetSdk = BuildConfig.Android.targetSdkVersion
+        minSdk = 21
+        targetSdk = 31
         versionCode = BuildConfig.Info.versionCode
         versionName = BuildConfig.Info.version
     }

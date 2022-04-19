@@ -19,7 +19,7 @@ group = BuildConfig.Info.group
 version = BuildConfig.Info.version
 
 plugins {
-    id("org.jetbrains.dokka") version BuildConfig.Info.DokkaVersion
+    id("org.jetbrains.dokka")
 }
 
 tasks.withType<org.jetbrains.dokka.gradle.DokkaMultiModuleTask>(){

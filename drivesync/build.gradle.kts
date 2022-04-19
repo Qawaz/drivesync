@@ -12,11 +12,11 @@ group = BuildConfig.Info.group
 version = BuildConfig.Info.version
 
 android {
-    compileSdk = BuildConfig.Android.compileSdkVersion
+    compileSdk = 31
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
-        minSdk = BuildConfig.Android.minSdkVersion
-        targetSdk = BuildConfig.Android.targetSdkVersion
+        minSdk = 21
+        targetSdk = 31
 
         consumerProguardFiles("proguard-rules.pro")
     }
