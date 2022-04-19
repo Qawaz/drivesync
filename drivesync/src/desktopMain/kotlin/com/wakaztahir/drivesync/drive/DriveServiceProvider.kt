@@ -9,7 +9,7 @@ import com.google.auth.oauth2.AccessToken
 import com.google.auth.oauth2.UserCredentials
 import com.wakaztahir.drivesync.core.SyncServiceProvider
 import com.wakaztahir.drivesync.model.SyncFile
-import com.wakaztahir.tlstorage.StorageInputStream
+import com.wakaztahir.kmpstorage.StorageInputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*

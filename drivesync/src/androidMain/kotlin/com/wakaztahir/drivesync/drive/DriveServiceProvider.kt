@@ -10,7 +10,7 @@ import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
 import com.wakaztahir.drivesync.core.SyncServiceProvider
 import com.wakaztahir.drivesync.model.SyncFile
-import com.wakaztahir.tlstorage.StorageInputStream
+import com.wakaztahir.kmpstorage.StorageInputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*

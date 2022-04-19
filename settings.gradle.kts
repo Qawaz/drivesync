@@ -8,9 +8,9 @@ pluginManagement {
     }
     
 }
+
 rootProject.name = "DriveSync"
 
-include(":android")
-include(":desktop")
+include(":demo:android")
+include(":demo:desktop")
 include(":drivesync")
-

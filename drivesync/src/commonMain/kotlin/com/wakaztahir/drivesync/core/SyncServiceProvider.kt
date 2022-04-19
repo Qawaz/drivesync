@@ -1,7 +1,7 @@
 package com.wakaztahir.drivesync.core
 
 import com.wakaztahir.drivesync.model.SyncFile
-import com.wakaztahir.tlstorage.StorageInputStream
+import com.wakaztahir.kmpstorage.StorageInputStream
 
 interface SyncServiceProvider {
     /**

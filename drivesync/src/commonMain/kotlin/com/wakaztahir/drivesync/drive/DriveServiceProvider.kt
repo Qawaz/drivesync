@@ -2,7 +2,7 @@ package com.wakaztahir.drivesync.drive
 
 import com.wakaztahir.drivesync.core.SyncServiceProvider
 import com.wakaztahir.drivesync.model.SyncFile
-import com.wakaztahir.tlstorage.StorageInputStream
+import com.wakaztahir.kmpstorage.StorageInputStream
 
 expect open class DriveServiceProvider : SyncServiceProvider {
     /**
