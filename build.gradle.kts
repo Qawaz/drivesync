@@ -1,24 +1,15 @@
 import java.util.Properties
 import java.io.FileInputStream
 
-buildscript {
-    repositories {
-        gradlePluginPortal()
-        jcenter()
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${BuildConfig.Info.KotlinVersion}")
-        classpath("com.android.tools.build:gradle:7.0.4")
-        classpath("org.jetbrains.kotlin:kotlin-serialization:${BuildConfig.Info.KotlinVersion}")
-    }
-}
-
-group = BuildConfig.Info.group
-version = BuildConfig.Info.version
-
 plugins {
+    // this is necessary to avoid the plugins to be loaded multiple times
+    // in each subproject's classloader
+    kotlin("jvm") apply false
+    kotlin("multiplatform") apply false
+    kotlin("android") apply false
+    id("com.android.application") apply false
+    id("com.android.library") apply false
+    id("org.jetbrains.compose") apply false
     id("org.jetbrains.dokka")
 }
 
@@ -45,4 +36,24 @@ allprojects {
             }.onFailure { it.printStackTrace() }
         }
     }
+}
+
+subprojects {
+
+    version = property("version")!!
+
+    plugins.withId("java") {
+        extensions.findByType(JavaPluginExtension::class.java)?.apply {
+            sourceCompatibility = JavaVersion.VERSION_11
+            targetCompatibility = JavaVersion.VERSION_11
+
+            withJavadocJar()
+            withSourcesJar()
+        }
+    }
+
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>() {
+        kotlinOptions.jvmTarget = "11"
+    }
+
 }

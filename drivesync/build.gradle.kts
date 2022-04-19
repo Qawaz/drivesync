@@ -8,38 +8,18 @@ plugins {
     id("org.jetbrains.dokka")
 }
 
-group = BuildConfig.Info.group
-version = BuildConfig.Info.version
-
-android {
-    compileSdk = 31
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    defaultConfig {
-        minSdk = 21
-        targetSdk = 31
-
-        consumerProguardFiles("proguard-rules.pro")
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-}
+group = "com.wakaztahir"
 
 kotlin {
     android {
         publishLibraryVariants("release")
     }
-    jvm("desktop") {
-        compilations.all {
-            kotlinOptions.jvmTarget = "11"
-        }
-    }
+    jvm("desktop")
     sourceSets {
         val commonMain by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-                implementation("com.wakaztahir:kmp-storage:1.0.0")
+                implementation("com.wakaztahir:kmp-storage:1.0.1")
             }
         }
         val commonTest by getting {
@@ -82,24 +62,66 @@ kotlin {
     }
 }
 
+android {
+    compileSdk = 31
+
+    defaultConfig {
+        minSdk = 21
+        targetSdk = 31
+        consumerProguardFiles("proguard-rules.pro")
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    sourceSets {
+        named("main") {
+            manifest.srcFile("src/androidMain/AndroidManifest.xml")
+            res.srcDirs("src/androidMain/res")
+        }
+    }
+}
 
 val githubProperties = Properties()
 kotlin.runCatching { githubProperties.load(FileInputStream(rootProject.file("github.properties"))) }
 
-afterEvaluate {
-    publishing {
-        repositories {
-            maven {
-                name = "GithubPackages"
-                url = uri("https://maven.pkg.github.com/codeckle/drivesync")
+configure<PublishingExtension> {
+    publications {
+        all {
+            this as MavenPublication
 
-                runCatching {
-                    credentials {
-                        username = (githubProperties["gpr.usr"] ?: System.getenv("GPR_USER")).toString()
-                        password = (githubProperties["gpr.key"] ?: System.getenv("GPR_API_KEY")).toString()
+            pom {
+                this.name.set("Library for Compose Multiplatform")
+                licenses {
+                    license {
+                        this.name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
                     }
-                }.onFailure { it.printStackTrace() }
+                }
             }
+        }
+    }
+
+    repositories {
+        maven {
+            setUrl(findProperty("publish.url")?.toString().orEmpty())
+            credentials {
+                username = findProperty("publish.username")?.toString().orEmpty()
+                password = findProperty("publish.password")?.toString().orEmpty()
+            }
+        }
+        maven {
+            name = "GithubPackages"
+            url = uri("https://maven.pkg.github.com/codeckle/drivesync")
+            runCatching {
+                credentials {
+                    /**Create github.properties in root project folder file with gpr.usr=GITHUB_USER_ID  & gpr.key=PERSONAL_ACCESS_TOKEN**/
+                    username = (githubProperties["gpr.usr"] ?: System.getenv("GPR_USER")).toString()
+                    password = (githubProperties["gpr.key"] ?: System.getenv("GPR_API_KEY")).toString()
+                }
+            }.onFailure { it.printStackTrace() }
         }
     }
 }
