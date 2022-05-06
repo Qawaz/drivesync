@@ -18,8 +18,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-                implementation("com.wakaztahir:kmp-storage:1.0.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
+                implementation("com.wakaztahir:kmp-storage:1.0.2")
             }
         }
         val commonTest by getting {
@@ -85,43 +85,48 @@ android {
 }
 
 val githubProperties = Properties()
-kotlin.runCatching { githubProperties.load(FileInputStream(rootProject.file("github.properties"))) }
+try{
+    githubProperties.load(FileInputStream(rootProject.file("github.properties")))
+}catch(ex : Exception){
+    ex.printStackTrace()
+}
 
 configure<PublishingExtension> {
-    publications {
-        all {
-            this as MavenPublication
-
-            pom {
-                this.name.set("Library for Compose Multiplatform")
-                licenses {
-                    license {
-                        this.name.set("The Apache License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
-                }
-            }
-        }
-    }
+//    publications {
+//        all {
+//            this as MavenPublication
+//
+//            pom {
+//                this.name.set("Library for Compose Multiplatform")
+//                licenses {
+//                    license {
+//                        this.name.set("The Apache License, Version 2.0")
+//                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     repositories {
-        maven {
-            setUrl(findProperty("publish.url")?.toString().orEmpty())
-            credentials {
-                username = findProperty("publish.username")?.toString().orEmpty()
-                password = findProperty("publish.password")?.toString().orEmpty()
-            }
-        }
+//        maven {
+//            setUrl(findProperty("publish.url")?.toString().orEmpty())
+//            credentials {
+//                username = findProperty("publish.username")?.toString().orEmpty()
+//                password = findProperty("publish.password")?.toString().orEmpty()
+//            }
+//        }
         maven {
             name = "GithubPackages"
             url = uri("https://maven.pkg.github.com/codeckle/drivesync")
-            runCatching {
+            try {
                 credentials {
-                    /**Create github.properties in root project folder file with gpr.usr=GITHUB_USER_ID  & gpr.key=PERSONAL_ACCESS_TOKEN**/
                     username = (githubProperties["gpr.usr"] ?: System.getenv("GPR_USER")).toString()
                     password = (githubProperties["gpr.key"] ?: System.getenv("GPR_API_KEY")).toString()
                 }
-            }.onFailure { it.printStackTrace() }
+            }catch(ex : Exception){
+                ex.printStackTrace()
+            }
         }
     }
 }

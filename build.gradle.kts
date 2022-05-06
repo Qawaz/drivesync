@@ -28,12 +28,14 @@ allprojects {
         maven {
             name = "GithubPackages"
             url = uri("https://maven.pkg.github.com/codeckle/drivesync")
-            runCatching {
+            try {
                 credentials {
                     username = (githubProperties["gpr.usr"] ?: System.getenv("GPR_USER")).toString()
                     password = (githubProperties["gpr.key"] ?: System.getenv("GPR_API_KEY")).toString()
                 }
-            }.onFailure { it.printStackTrace() }
+            }catch(ex : Exception){
+                ex.printStackTrace()
+            }
         }
     }
 }
